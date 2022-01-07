@@ -1,0 +1,14 @@
+---
+
+- name: Applying customizations
+  import_tasks: 00_customization.yml
+
+- name: Creating groups and users
+  import_tasks: 01_users.yml
+
+- name: Creating sudo roles
+  import_tasks: 02_sudo.yml
+
+- name: Configuring SSH daemon
+  import_tasks: 03_sshd.yml
+

@@ -1,0 +1,16 @@
+---
+
+- name: Loading assertion messages
+  include_vars:
+    file: assertions.yml
+
+- name: Gathering service facts
+  service_facts: {}
+
+- name: Facts must have been fetched
+  assert:
+    that:
+      -  ansible_facts is defined
+      - "{{ 'services' in ansible_facts }}"
+    fail_msg: '{{ assertion_messages.fact_fetch_error }}'
+

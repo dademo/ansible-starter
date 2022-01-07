@@ -1,0 +1,28 @@
+---
+
+# https://docs.fedoraproject.org/en-US/epel/
+- name: Repositories | Adding EPEL
+  include_tasks: epel.yml
+  when:
+    - repos.epel | default(False)
+    - ansible_facts['distribution'] in ['CentOS', 'RedHat']
+
+# https://rpmfusion.org/Configuration
+- name: Repositories | Adding RPMFusion
+  block:
+    - name: Repositories | Adding RPMFusion | Adding free releases
+      dnf:
+        name: "{{ repositories.rhel.rpmfusion.free[ansible_facts['distribution']] }}"
+        state: present
+        update_cache: yes
+        disable_gpg_check: yes
+    - name: Repositories | Adding RPMFusion | Adding nonfree releases
+      dnf:
+        package: "{{ repositories.rhel.rpmfusion.nonfree[ansible_facts['distribution']] }}"
+        state: present
+        update_cache: yes
+        disable_gpg_check: yes
+      when: allow_nonfree | default(False)
+  when:
+    - repos.rpmfusion | default(False)
+

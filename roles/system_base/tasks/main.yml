@@ -1,0 +1,17 @@
+---
+
+- name: Gathering all facts
+  include_tasks: 00_facts.yml
+
+- name: Debian hosts setup
+  include_tasks: debian/main.yml
+  when:
+    - ansible_facts['os_family'] == 'Debian'
+
+- name: RHEL hosts setup
+  include_tasks: rhel/main.yml
+  when:
+    - ansible_facts['os_family'] == 'RedHat'
+
+- name: Common tasks
+  import_tasks: shared/main.yml

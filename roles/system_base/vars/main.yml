@@ -1,0 +1,35 @@
+---
+
+repositories:
+  rhel:
+    epel:
+      CentOS:
+        8:
+          Core: epel-release
+          Stream: epel-next-release
+        9:
+          - "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ansible_facts['distribution_major_version']}}.noarch.rpm"
+          - "https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-{{ansible_facts['distribution_major_version']}}.noarch.rpm"
+      RedHat:
+        8: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ansible_facts['distribution_major_version']}}.noarch.rpm"
+    rpmfusion:
+      free:
+        Fedora: "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ansible_facts['distribution_major_version']}}.noarch.rpm"
+        CentOS: "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-{{ansible_facts['distribution_major_version']}}.noarch.rpm"
+        RedHat: "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-{{ansible_facts['distribution_major_version']}}.noarch.rpm"
+      nonfree:
+        Fedora: "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ansible_facts['distribution_major_version']}}.noarch.rpm"
+        CentOS: "https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-{{ansible_facts['distribution_major_version']}}.noarch.rpm"
+        RedHat: "https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-{{ansible_facts['distribution_major_version']}}.noarch.rpm"
+
+default_users:
+  - name: ansible
+    groups:
+      - users
+    system: false
+    comment: Ansible technical user
+    shell: /bin/bash
+    ssh_key_file: null
+    generate_ssh_key: yes
+    ssh_key_comment: Ansible technical user access (generated on $HOSTNAME)
+

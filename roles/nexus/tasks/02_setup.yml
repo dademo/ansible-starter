@@ -1,0 +1,81 @@
+---
+
+# Installing software
+
+- name: Downloading software archive
+  get_url:
+    url: '{{ nexus_url }}'
+    dest: '{{ nexus_user_home }}/software/archives/'
+    checksum: "sha1:{{ lookup('url', nexus_sha1_url, split_lines=False) }}"
+    owner: '{{ nexus_user }}'
+    group: '{{ nexus_user }}'
+    backup: no
+  register: nexus_archive
+
+- name: Extracting software archive
+  unarchive:
+    src: '{{ nexus_archive.dest }}'
+    dest: '{{ nexus_user_home }}/software/versions'
+    copy: no
+    exclude:
+      - sonatype-work
+    owner: '{{ nexus_user }}'
+    group: '{{ nexus_user }}'
+
+- name: Stopping service
+  systemd:
+    state: stopped
+    name: '{{ nexus_service }}'
+  when: nexus_service_name in ansible_facts['services']
+
+- name: Updating symlink
+  block:
+    - name: Updating symlink | Removing symlink if already exists
+      file:
+        path: '{{ nexus_user_home }}/nexus'
+        state: absent
+        follow: no
+    - name: Updating symlink | Creating symlink
+      file:
+        src: '{{ nexus_user_home }}/software/versions/nexus-{{ nexus_version }}'
+        dest: '{{ nexus_user_home }}/nexus'
+        state: link
+        owner: '{{ nexus_user }}'
+        group: '{{ nexus_user }}'
+        force: no
+
+- name: Configuring service JVM
+  template:
+    src: nexus.vmoptions.j2
+    dest: '{{ nexus_user_home }}/nexus/bin/nexus.vmoptions'
+
+- name: Configuring service
+  template:
+    src: nexus.properties.j2
+    dest: '{{ nexus_user_home }}/sonatype-work/nexus/etc/nexus.properties'
+
+- name: Adding firewalld rules
+  ansible.posix.firewalld:
+    port: '{{ nexus_port }}/tcp'
+    state: enabled
+    immediate: yes
+    permanent: yes
+  when: "'firewalld' in ansible_facts['services']"
+
+- name: Creating service
+  template:
+    src: nexus.service.j2
+    dest: '/etc/systemd/system/{{ nexus_service_name }}.service'
+    backup: no
+    owner: root
+    group: root
+
+- name: Enabling and starting service
+  systemd:
+    name: '{{ nexus_service_name }}'
+    state: started
+    daemon_reload: yes
+    enabled: yes
+    masked: no
+    no_block: no
+

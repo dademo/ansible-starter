@@ -1,0 +1,26 @@
+---
+
+- name: Configuring sudo | Looking for files in /etc/sudoers.d
+  find:
+    paths: /etc/sudoers.d/
+    file_type: file
+    hidden: yes
+    follow: false
+    recurse: no
+  register: sudoers_files
+
+- name: Configuring sudo | Adding users configuration
+  template:
+    src: sudo/00_user.j2
+    dest: '/etc/sudoers.d/00_{{ username }}'
+    validate: visudo -cf %s
+  vars:
+    username: '{{ item.name }}'
+  loop: '{{ default_users + (authentication.users | default([])) }}'
+
+- name: Configuring sudo | Cleaning sudoers.d | Removing preexisting files
+  file:
+    path: '{{ item.path }}'
+    state: absent
+  loop: '{{ sudoers_files.files }}'
+

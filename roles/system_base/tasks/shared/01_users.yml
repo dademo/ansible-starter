@@ -1,0 +1,116 @@
+---
+
+# Users and groups creation
+
+- name: Configuring users and groups | Groups creation
+  group:
+    name: '{{ item.name }}'
+    non_unique: no
+    state: present
+    system: '{% if item.system %}yes{% else %}no{% endif %}'
+  loop: '{{ authentication.groups }}'
+
+- name: Configuring users and groups | User creation | First host
+  user:
+    name: '{{ item.name }}'
+    groups: '{{ item.groups | default([]) }}'
+    system: '{% if item.system | default(False) %}yes{% else %}no{% endif %}'
+    comment: '{{ item.comment | default(None) }}'
+    shell: "{{ item.shell | default('/usr/bin/zsh') }}"
+    ssh_key_file: "{{ item.ssh_key_file | default('.ssh/id_rsa', True) }}"
+    generate_ssh_key: '{% if item.generate_ssh_key | default(False) %}yes{% else %}no{% endif %}'
+    ssh_key_comment: "{{ item.ssh_key_comment | default('ansible-generated on $HOSTNAME') }}"
+    password_lock: yes
+    state: present
+    create_home: yes
+    skeleton: /etc/skel
+    append: no
+    force: no
+    non_unique: no
+  loop: '{{ default_users + authentication.users }}'
+  register: created_users
+  when: inventory_hostname == ansible_play_hosts_all[0]
+
+- name: Configuring users and groups | Saving SSH keys
+  block:
+    - name: Configuring users and groups | Saving SSH keys | Checking for public key existance
+      stat:
+        path: "{{ item.ssh_key_file | default(item.home + '/.ssh/id_rsa', True) }}.pub"
+        follow: yes
+        get_attributes: no
+        get_checksum: no
+        get_mime: no
+      register: pubkey_stat
+      loop: '{{ created_users.results }}'
+    - name: Configuring users and groups | Saving SSH keys | Checking for private key existance
+      stat:
+        path: "{{ item.ssh_key_file | default(item.home + '/.ssh/id_rsa', True) }}"
+        follow: yes
+        get_attributes: no
+        get_checksum: no
+        get_mime: no
+      register: privkey_stat
+      loop: '{{ created_users.results }}'
+
+    - name: Configuring users and groups | Saving SSH keys | Getting public key if present
+      fetch:
+        src: '{{ item.stat.path }}'
+        dest: 'resources/{{ item.stat.pw_name }}/id_rsa.pub'
+        flat: yes
+        validate_checksum: yes
+      loop: '{{ pubkey_stat.results }}'
+      when: item.stat.exists
+
+    - name: Configuring users and groups | Saving SSH keys | Getting private key if present
+      fetch:
+        src: '{{ item.stat.path }}'
+        dest: 'resources/{{ item.stat.pw_name }}/id_rsa'
+        flat: yes
+        validate_checksum: yes
+      loop: '{{ privkey_stat.results }}'
+      when: item.stat.exists
+  when: inventory_hostname == ansible_play_hosts_all[0]
+
+
+- name: Configuring users and groups | User creation | Other hosts
+  user:
+    name: '{{ item.name }}'
+    groups: '{{ item.groups | default([]) }}'
+    system: '{% if item.system | default(False) %}yes{% else %}no{% endif %}'
+    comment: '{{ item.comment | default(None) }}'
+    shell: "{{ item.shell | default('/usr/bin/zsh') }}"
+    ssh_key_file: >-
+      {% if item.generate_ssh_key | default(False) %}
+        resources/{{ item.name }}/id_rsa
+      {% else %}
+        null
+      {% endif %}
+    generate_ssh_key: no
+    password_lock: yes
+    state: present
+    create_home: yes
+    skeleton: /etc/skel
+    append: no
+    force: no
+    non_unique: no
+  loop: '{{ default_users + authentication.users }}'
+  register: created_users
+  when: inventory_hostname != ansible_play_hosts_all[0]
+
+- name: Configuring users and groups | Removing default users
+  user:
+    name: '{{ item }}'
+    state: absent
+    remove: yes
+  loop:
+    - debian
+    - ubuntu
+    - centos
+    - admin
+
+- name: Configuring users and groups | Disabling root direct login
+  user:
+    name: root
+    state: present
+    password_lock: yes
+

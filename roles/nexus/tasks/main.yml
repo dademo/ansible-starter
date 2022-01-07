@@ -1,0 +1,11 @@
+---
+
+- name: Requirements
+  import_tasks: 00_requirements.yml
+
+- name: Initialization
+  import_tasks: 01_bootstrap.yml
+
+- name: Installation
+  import_tasks: 02_setup.yml
+

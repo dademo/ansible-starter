@@ -1,0 +1,47 @@
+---
+
+- name: Repositories | EPEL | Adding EPEL for CentOS Stream 9
+  block:
+    - name: Repositories | EPEL | Adding EPEL for CentOS Stream 9 | Prerequisites
+      command:
+        cmd: dnf config-manager --set-enabled crb
+    - name: Repositories | EPEL | Adding EPEL for CentOS Stream 9 | Installing package
+      dnf:
+        name: "{{ repositories.rhel.epel[ansible_facts['distribution']][ansible_facts['distribution_major_version']] }}"
+        state: present
+        update_cache: yes
+        disable_gpg_check: yes
+  when:
+    - ansible_facts['distribution'] == 'CentOS'
+    - ansible_facts['distribution_major_version'] == '9'
+
+- name: Repositories | EPEL | Adding EPEL for RHEL 8
+  block:
+    - name: Repositories | EPEL | Adding EPEL for RHEL 8 | Prerequisites
+      command:
+        cmd: subscription-manager repos --enable codeready-builder-for-rhel-8-$(arch)-rpms
+    - name: Repositories | EPEL | Adding EPEL for RHEL 8 | Installing package
+      dnf:
+        name: "{{ repositories.rhel.epel[ansible_facts['distribution']][ansible_facts['distribution_major_version']] }}"
+        state: present
+        update_cache: yes
+        disable_gpg_check: yes
+  when:
+    - ansible_facts['distribution'] == 'RedHat'
+    - ansible_facts['distribution_major_version'] == '8'
+
+- name: Repositories | EPEL | Adding EPEL for CentOS 8
+  block:
+    - name: Repositories | EPEL | Adding EPEL for CentOS 8 | Prerequisites
+      command:
+        cmd: dnf config-manager --set-enabled powertools
+    - name: Repositories | EPEL | Adding EPEL for CentOS 8 | Installing package
+      dnf:
+        name: "{{ repositories.rhel.epel[ansible_facts['distribution']][ansible_facts['distribution_major_version']][ansible_facts['distribution_release']] }}"
+        state: present
+        update_cache: yes
+        disable_gpg_check: yes
+  when:
+    - ansible_facts['distribution'] == 'CentOS'
+    - ansible_facts['distribution_major_version'] == '8'
+

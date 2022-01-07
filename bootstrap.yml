@@ -1,0 +1,26 @@
+#!/usr/bin/env ansible-playbook
+
+- name: Preparing system
+  hosts: all
+  #hosts: nexus
+  gather_facts: yes
+  become: yes
+  become_user: root
+  become_method: sudo
+  tags:
+    - configuration
+  roles:
+    - system_base
+
+- name: Installing Nexus
+  hosts: nexus
+  gather_facts: yes
+  remote_user: ansible
+  become: yes
+  become_user: root
+  become_method: sudo
+  tags:
+    - nexus
+  roles:
+    - nexus
+

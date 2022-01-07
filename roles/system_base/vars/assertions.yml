@@ -1,0 +1,20 @@
+---
+
+assertion_messages:
+  fact_fetch_error: You must fetch facts before running this module
+  required_packages_not_defined: >-
+      Required packages must be defined.
+      You must define a variable named `packages` being a list of distributions.
+      For example :
+        packages:
+          Debian:
+            - bash
+          Ubuntu:
+            - bash
+          RedHat:
+            - bash
+          CentOS:
+            - bash
+          Fedora:
+            - bash
+

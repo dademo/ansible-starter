@@ -1,0 +1,40 @@
+---
+
+- name: Creating Nexus user
+  user:
+    name: '{{ nexus_user }}'
+    state: present
+    password_lock: yes
+    create_home: yes
+    home: '{{ nexus_user_home }}'
+    system: yes
+    generate_ssh_key: no
+    shell: /usr/bin/false
+
+- name: Installing requirements
+  dnf:
+    name: "{{ required_packages[ansible_facts['distribution']] }}"
+    state: present
+    update_cache: yes
+
+# https://help.sonatype.com/repomanager3/product-information/system-requirements
+- name: Configuring security
+  community.general.pam_limits:
+    domain: '{{ nexus_user }}'
+    limit_item: nofile
+    limit_type: '-'
+    value: '65536'
+    comment: Sonatype Nexus requirements, see https://help.sonatype.com/repomanager3/product-information/system-requirements
+
+- name: Creating Nexus version repository
+  file:
+    path: '{{ nexus_user_home }}/{{ item }}'
+    state: directory
+    recurse: true
+    owner: '{{ nexus_user }}'
+    group: '{{ nexus_user }}'
+  loop:
+    - software/versions
+    - software/archives
+    - sonatype-work/nexus
+

@@ -1,0 +1,19 @@
+---
+
+nexus_service_name: nexus
+#nexus_url: https://download.sonatype.com/nexus/3/nexus-3.37.3-02-unix.tar.gz
+nexus_url: https://download.sonatype.com/nexus/3/nexus-{{ nexus_version }}-unix.tar.gz
+nexus_sha1_url: https://download.sonatype.com/nexus/3/nexus-{{ nexus_version }}-unix.tar.gz.sha1
+
+required_packages:
+  Fedora:
+    - java-1.8.0-openjdk
+  CentOS:
+    - java-1.8.0-openjdk
+  RedHat:
+    - java-1.8.0-openjdk
+  Debian:
+    - openjdk-8-jre
+  Ubuntu:
+    - openjdk-8-jre
+

@@ -1,0 +1,71 @@
+---
+repos:
+  epel: false
+  rpmfusion: true
+allow_nonfree: false
+
+packages:
+  Debian:
+    - zsh
+    - htop
+    - iotop
+    - iftop
+    - screen
+    - byobu
+    - vim
+    - fail2ban
+    - cron
+  Ubuntu:
+    - zsh
+    - htop
+    - iotop
+    - iftop
+    - screen
+    - byobu
+    - vim
+    - fail2ban
+    - cron
+  RedHat:
+    - zsh
+    - htop
+    - iotop
+    - iftop
+    - screen
+    - byobu
+    - vim
+    - fail2ban-all
+    - cronie
+  CentOS:
+    - zsh
+    - htop
+    - iotop
+    - iftop
+    - screen
+    - byobu
+    - vim
+    - fail2ban-all
+    - cronie
+  Fedora:
+    - zsh
+    - htop
+    - iotop
+    - iftop
+    - screen
+    - byobu
+    - vim
+    - fail2ban-all
+    - cronie
+
+zshrc_url: https://git.grml.org/f/grml-etc-core/etc/zsh/zshrc
+
+authentication:
+  groups: []
+  users:
+    - name: dademo
+      groups:
+        - users
+      system: false
+      comment: Damien DEMONAZ
+      shell: /usr/bin/bash
+      ssh_key_file: ~/.ssh/id_rsa.pub
+

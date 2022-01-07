@@ -1,0 +1,21 @@
+---
+
+- name: Loading assertion messages
+  include_vars:
+    file: assertions.yml
+
+- name: Facts must have been fetched
+  assert:
+    that:
+      -  ansible_facts is defined 
+      - 'distribution' in ansible_facts
+      - 'services' in ansible_facts
+    fail_msg: '{{ assertion_messages.fact_fetch_error }}'
+
+- name: Required packages must be defined
+  assert:
+    that:
+      - packages is defined
+      - ansible_facts['distribution'] in packages
+      - packages[ansible_facts['distribution']] is iterable
+    fail_msg: '{{ assertion_messages.required_packages_not_defined }}'

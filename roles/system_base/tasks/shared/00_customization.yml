@@ -1,0 +1,12 @@
+---
+
+- name: Adding ZSH theme (zshrc)
+  get_url:
+    url: '{{ zshrc_url }}'
+    dest: /etc/skel/.zshrc
+    owner: root
+    group: root
+    backup: yes
+    validate_certs: yes
+  when: zshrc_url is defined
+

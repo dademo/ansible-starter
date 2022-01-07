@@ -1,0 +1,5 @@
+---
+
+assertion_messages:
+  fact_fetch_error: You must fetch facts before running this module
+

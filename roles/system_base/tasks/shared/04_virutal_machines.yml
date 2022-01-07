@@ -1,0 +1,48 @@
+---
+
+- name: Configuring virtual machines specifics | Adding a memory purge cron
+  block:
+    - name: Configuring virtual machines specifics | Adding a memory purge cron | Adding script
+      copy:
+        src: fs_cache_clean.sh
+        dest: /opt/scripts/fs_cache_clean.sh
+        remote_src: no
+        force: yes
+        backup: no
+        mode: '755'
+        owner: root
+        group: root
+        # The script must work
+        validate: sh %s
+    - name: Setting up cron
+      cron:
+        name: 'ansible_fs_cache_clean'
+        cron_file: 'ansible_fs_cache_clean'
+        job: "sh '/opt/scripts/fs_cache_clean.sh'"
+        user: root
+        state: present
+        backup: no
+        disabled: no
+        minute: '*'
+        hour: '*'
+        day: '*'
+        month: '*'
+        weekday: '*'
+  when:
+    - "'crond' in ansible_facts['services']"
+    - "'virtual' in group_names"
+
+- name: Configuring SSH | Notifying SELinux of the port change
+  community.general.seport:
+    ports: '{{ sshd_port }}'
+    proto: tcp
+    setype: ssh_port_t
+    state: present
+
+- name: Configuring SSH | Configuring SSH daemon
+  template:
+    src: ssh/sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Restart sshd
+
