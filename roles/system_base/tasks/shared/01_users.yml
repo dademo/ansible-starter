@@ -16,7 +16,7 @@
     groups: '{{ item.groups | default([]) }}'
     system: '{% if item.system | default(False) %}yes{% else %}no{% endif %}'
     comment: '{{ item.comment | default(None) }}'
-    shell: "{{ item.shell | default('/usr/bin/zsh') }}"
+    shell: "{{ item.shell | default('/bin/bash') }}"
     ssh_key_file: "{{ item.ssh_key_file | default('.ssh/id_rsa', True) }}"
     generate_ssh_key: '{% if item.generate_ssh_key | default(False) %}yes{% else %}no{% endif %}'
     ssh_key_comment: "{{ item.ssh_key_comment | default('ansible-generated on $HOSTNAME') }}"
@@ -24,7 +24,7 @@
     state: present
     create_home: yes
     skeleton: /etc/skel
-    append: no
+    append: yes
     force: no
     non_unique: no
   loop: '{{ default_users + authentication.users }}'

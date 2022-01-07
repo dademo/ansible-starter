@@ -8,5 +8,7 @@
     group: root
     backup: yes
     validate_certs: yes
-  when: zshrc_url is defined
+  when:
+    - zshrc_url is defined
+    - zshrc_url | default('') | length > 0
 

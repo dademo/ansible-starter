@@ -1,3 +1,87 @@
 ---
 
 sshd_port: 4222
+fail2ban_disable: false
+zshrc_url: null
+
+authentication:
+  groups: []
+  users: []
+
+repos:
+  epel: false
+  rpmfusion: false
+allow_nonfree: false
+
+packages:
+  Debian:
+    - zsh
+    - htop
+    - iotop
+    - iftop
+    - screen
+    - byobu
+    - vim
+    - fail2ban
+    - cron
+    - python3
+    - python3-virtualenv
+    - git
+    - git-lfs
+  Ubuntu:
+    - zsh
+    - htop
+    - iotop
+    - iftop
+    - screen
+    - byobu
+    - vim
+    - fail2ban
+    - cron
+    - python3
+    - python3-virtualenv
+    - git
+    - git-lfs
+  RedHat:
+    - zsh
+    - htop
+    - iotop
+    - iftop
+    - screen
+    - byobu
+    - vim
+    - fail2ban-all
+    - cronie
+    - python3
+    - python3-virtualenv
+    - git
+    - git-lfs
+  CentOS:
+    - zsh
+    - htop
+    - iotop
+    - iftop
+    - screen
+    - byobu
+    - vim
+    - fail2ban-all
+    - cronie
+    - python3
+    - python3-virtualenv
+    - git
+    - git-lfs
+  Fedora:
+    - zsh
+    - htop
+    - iotop
+    - iftop
+    - screen
+    - byobu
+    - vim
+    - fail2ban-all
+    - cronie
+    - python3
+    - python3-virtualenv
+    - git
+    - git-lfs
+

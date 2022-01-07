@@ -1,0 +1,38 @@
+---
+galaxy_info:
+  role_name: ssh_guard
+  author: Damien DEMONAZ
+  description: A guard to update SSH port frmo a list of ports (used when port is changed in Ansible role)
+  company: null
+  license: Mozilla Public License, version 2.0
+  min_ansible_version: 2.0
+  platforms:
+    - name: Fedora
+      versions:
+        - 30
+        - 31
+        - 32
+        - 33
+        - 34
+        - 35
+    - name: CentOS
+      versions:
+        - 8
+        - 9
+    - name: Debian
+      versions:
+        - 9
+        - 10
+        - 11
+    - name: Ubuntu
+      versions:
+        - 20.04
+        - 20.10
+        - 21.04
+        - 21.10
+    
+  galaxy_tags:
+    - system
+
+dependencies: []
+

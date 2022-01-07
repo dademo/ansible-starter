@@ -1,0 +1,24 @@
+---
+
+# Required vars:
+# - ssh_port
+
+- name: SSH check
+  block:
+  - name: SSH check | Updating ansible port
+    set_fact:
+      ansible_port: '{{ ssh_port | int }}'
+  
+  - name: SSH check | Pinging
+    ping: {}
+    ignore_unreachable: yes
+    register: ping_result
+  
+  - debug:
+      var: ping_result
+  
+  - name: SSH check | Port is valid
+    set_fact:
+      ssh_port_valid: '{{ ping_result.ping is defined }}'
+  when: not ssh_port_valid
+  

@@ -4,6 +4,10 @@
   include_vars:
     file: assertions.yml
 
+- name: Gathering system facts
+  setup:
+    gather_subset: all
+
 - name: Gathering service facts
   service_facts: {}
 
@@ -12,5 +16,6 @@
     that:
       -  ansible_facts is defined
       - "{{ 'services' in ansible_facts }}"
+      - "{{ 'os_family' in ansible_facts }}"
     fail_msg: '{{ assertion_messages.fact_fetch_error }}'
 

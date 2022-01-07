@@ -1,20 +1,25 @@
 #!/usr/bin/env ansible-playbook
 
 - name: Preparing system
-  hosts: all
+  hosts: "{{ host_override | default('all') }}"
   #hosts: nexus
-  gather_facts: yes
+  gather_facts: no
   become: yes
   become_user: root
   become_method: sudo
   tags:
     - configuration
   roles:
+    - ssh_guard
     - system_base
+  vars:
+    ssh_check_ports:
+      - '{{ sshd_port | default(None) }}'
+      - 22
 
 - name: Installing Nexus
-  hosts: nexus
-  gather_facts: yes
+  hosts: "{{ host_override | default('nexus') }}"
+  gather_facts: no
   remote_user: ansible
   become: yes
   become_user: root
@@ -22,5 +27,10 @@
   tags:
     - nexus
   roles:
+    - ssh_guard
     - nexus
+  vars:
+    ssh_check_ports:
+      - '{{ sshd_port | default(None) }}'
+      - 22
 

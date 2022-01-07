@@ -9,6 +9,12 @@
 - name: Creating sudo roles
   import_tasks: 02_sudo.yml
 
+- name: Configuring fail2ban
+  import_tasks: 03_fail2ban.yml
+
 - name: Configuring SSH daemon
-  import_tasks: 03_sshd.yml
+  import_tasks: 04_sshd.yml
+
+- name: Configuring virtual machines
+  import_tasks: 05_virutal_machines.yml
 

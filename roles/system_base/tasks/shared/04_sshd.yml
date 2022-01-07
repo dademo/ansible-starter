@@ -6,7 +6,9 @@
     state: enabled
     immediate: yes
     permanent: yes
-  when: "'firewalld' in ansible_facts['services']"
+  when:
+    - "'firewalld.service' in ansible_facts['services']"
+    - "ansible_facts['services']['firewalld.service']['state'] == 'running'"
 
 - name: Configuring SSH | Notifying SELinux of the port change
   community.general.seport:

@@ -1,0 +1,14 @@
+---
+
+- name: Setting requirements
+  set_fact:
+    ssh_port_valid: False
+
+- name: Running check
+  include_tasks: check.yml
+  loop: '{{ ssh_check_ports | default([22]) }}'
+  loop_control:
+    loop_var: ssh_port
+  when:
+    - ssh_port | default(0, True) | int > 0
+
