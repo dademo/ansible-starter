@@ -50,9 +50,18 @@
     dest: '{{ nexus_user_home }}/nexus/bin/nexus.vmoptions'
 
 - name: Configuring service
-  template:
-    src: nexus.properties.j2
-    dest: '{{ nexus_user_home }}/sonatype-work/nexus/etc/nexus.properties'
+  block:
+    - name: Configuring service | Ensuring configuration directory exists
+      file:
+        path: '{{ nexus_user_home }}/sonatype-work/nexus/etc/'
+        state: directory
+        recurse: yes
+        owner: '{{ nexus_user }}'
+        group: '{{ nexus_user }}'
+    - name: Configuring service | Applying configuration
+      template:
+        src: nexus.properties.j2
+        dest: '{{ nexus_user_home }}/sonatype-work/nexus/etc/nexus.properties'
 
 - name: Adding firewalld rules
   ansible.posix.firewalld:
