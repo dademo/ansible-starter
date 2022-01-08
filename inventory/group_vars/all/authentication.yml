@@ -1,0 +1,15 @@
+---
+
+authentication:
+  groups: []
+  users:
+    - name: dademo
+      groups:
+        - users
+      system: false
+      comment: Damien DEMONAZ
+      shell: /usr/bin/zsh
+      ssh_key_file: ~/.ssh/id_rsa.pub
+    - name: root
+      shell: /usr/bin/zsh
+

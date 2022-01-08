@@ -1,20 +1,4 @@
 ---
-sshd_port: 4222
-fail2ban_disable: false
-zshrc_url: https://git.grml.org/f/grml-etc-core/etc/zsh/zshrc
-
-authentication:
-  groups: []
-  users:
-    - name: dademo
-      groups:
-        - users
-      system: false
-      comment: Damien DEMONAZ
-      shell: /usr/bin/zsh
-      ssh_key_file: ~/.ssh/id_rsa.pub
-    - name: root
-      shell: /usr/bin/zsh
 
 repos:
   epel: false

@@ -33,3 +33,5 @@ default_users:
     generate_ssh_key: yes
     ssh_key_comment: Ansible technical user access (generated on $HOSTNAME)
 
+sudo_users_ignore:
+  - root

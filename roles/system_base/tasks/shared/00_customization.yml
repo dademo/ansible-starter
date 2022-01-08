@@ -10,5 +10,5 @@
     validate_certs: yes
   when:
     - zshrc_url is defined
-    - zshrc_url | default('') | length > 0
+    - zshrc_url | default('', True) | length > 0
 

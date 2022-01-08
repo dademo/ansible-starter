@@ -1,5 +1,8 @@
 ---
 
+- name: Updating service facts
+  service_facts: {}
+
 - name: Configuring SSH | Adding new SSH daemon port to the firewall
   ansible.posix.firewalld:
     port: '{{ sshd_port }}/tcp'

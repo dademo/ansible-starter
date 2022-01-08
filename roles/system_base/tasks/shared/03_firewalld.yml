@@ -1,0 +1,13 @@
+---
+
+- name: Updating service facts
+  service_facts: {}
+
+- name: Enabling firewalld
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes
+  when:
+    - "'firewalld.service' in ansible_facts['services']"
+

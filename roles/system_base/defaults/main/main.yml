@@ -1,0 +1,7 @@
+---
+
+sshd_port: 4222
+firewalld_enabled: true
+fail2ban_disable: false
+zshrc_url: null
+

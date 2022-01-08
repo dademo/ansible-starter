@@ -1,13 +1,5 @@
 ---
 
-sshd_port: 4222
-fail2ban_disable: false
-zshrc_url: null
-
-authentication:
-  groups: []
-  users: []
-
 repos:
   epel: false
   rpmfusion: false
