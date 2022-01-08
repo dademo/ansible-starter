@@ -1,5 +1,8 @@
 ---
 
+- name: Updating service facts
+  service_facts: {}
+
 - name: Configuring virtual machines specifics | Adding a memory purge cron
   block:
     - name: Configuring virtual machines specifics | Adding a memory purge cron | Adding script
@@ -29,6 +32,6 @@
         month: '*'
         weekday: '*'
   when:
-    - "'crond' in ansible_facts['services']"
+    - "'crond.service' in ansible_facts['services']"
     - "'virtual' in group_names"
 
