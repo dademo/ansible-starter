@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   role_name: system_base
-  author: Damien DEMONAZ
+  author: dademo
   description: A base role to bootstrap my servers
   company: null
   license: Mozilla Public License, version 2.0
