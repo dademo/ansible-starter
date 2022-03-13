@@ -2,7 +2,6 @@
 
 - name: Preparing system
   hosts: "{{ host_override | default('all') }}"
-  #hosts: nexus
   gather_facts: no
   become: yes
   become_user: root

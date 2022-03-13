@@ -1,7 +1,7 @@
 {#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
 
-{# Tracking definitions #}
-{% for track_process_name, track_process_def in (keepalived.vrrp_track_processes | default({})).items() %}
+{#- Tracking definitions #}
+{%- for track_process_name, track_process_def in (keepalived.vrrp_track_processes | default({})).items() %}
 vrrp_track_process track_{{ track_process_name | replace(' ', '_') }} {
   process {{ track_process_def.name }}
 {%  if track_process_def.weight is defined %}
@@ -27,7 +27,7 @@ vrrp_track_process track_{{ track_process_name | replace(' ', '_') }} {
 
 {% endfor %}
 
-{% for track_script_name, track_script_def in (keepalived.vrrp_track_scripts | default({})).items() %}
+{%- for track_script_name, track_script_def in (keepalived.vrrp_track_scripts | default({})).items() %}
 vrrp_track_script track_{{ track_script_name | replace(' ', '_') }} {
   script {{ track_script_def.script }}
   interval {{ track_script_def.interval | default(1) }}
@@ -39,17 +39,19 @@ vrrp_track_script track_{{ track_script_name | replace(' ', '_') }} {
   fall {{ track_script_def.fall }}
 {%  endif %}
 }
+
 {% endfor %}
 
-{% for track_file_name, track_file_def in (keepalived.vrrp_track_files | default({})).items() %}
+{%- for track_file_name, track_file_def in (keepalived.vrrp_track_files | default({})).items() %}
 vrrp_track_file track_{{ track_file_name | replace(' ', '_') }} {
   file {{ track_file_def.name }}
 }
+
 {% endfor %}
 
 
-{# VRRP definitions #}
-{% for vrrp_instance_name, vrrp_instance_def in (keepalived.vrrp | default({})).items() %}
+{#- VRRP definitions #}
+{%- for vrrp_instance_name, vrrp_instance_def in (keepalived.vrrp | default({})).items() %}
 vrrp_instance VI_{{ vrrp_instance_name | upper }} {
 
   state {{ rrp_instance_def.state_override | default('BACKUP') }}
@@ -65,13 +67,16 @@ vrrp_instance VI_{{ vrrp_instance_name | upper }} {
 
   virtual_ipaddress {
 {%   for vip in vrrp_instance_def.virtual_ipaddresses %}
-    {{ vip.address | ansible.netcommon.ipaddr('address') }}/{{ vip.address | ansible.netcommon.ipaddr('prefix') | default(vip.netmask | ansible.netcommon.ipaddr('netmask')) }} dev {{ vip.interface | default(vrrp_instance_def.interface | default(ansible_default_ipv4.interface)) }} scope global
+{%-   set _address = vip.address | ansible.netcommon.ipaddr('address') %}
+{%-   set _prefix = [vip.address] | ansible.netcommon.ipaddr('host/prefix') | ansible.netcommon.ipaddr('prefix') | difference([32]) | first | default(vip.netmask) %}
+    {{ (_address + '/' + _prefix) | ansible.netcommon.ipaddr('host/prefix') }} dev {{ vip.interface | default(vrrp_instance_def.interface | default(ansible_default_ipv4.interface)) }} scope global
 {%   endfor %}
   }
 
-{# Track configurations #}
-{## Track network interfaces ##}
-{%  if vrrp_instance_def.track_interfaces is defined %}
+{#- Track configurations #}
+{##- Track network interfaces ##}
+{%-  if vrrp_instance_def.track_interfaces is defined %}
+
   track_interface {
 {%    for track_interface in vrrp_instance_def.track_interfaces %}
     {{ track_interface.name }} 
@@ -79,8 +84,9 @@ vrrp_instance VI_{{ vrrp_instance_name | upper }} {
   }
 {%  endif %}
 
-{## Track processes ##}
-{%  if vrrp_instance_def.track_processes is defined %}
+{##- Track processes ##}
+{%-  if vrrp_instance_def.track_processes is defined %}
+
   track_process {
 {%    for track_process in vrrp_instance_def.track_processes %}
     track_{{ track_process }}
@@ -88,8 +94,9 @@ vrrp_instance VI_{{ vrrp_instance_name | upper }} {
   }
 {%  endif %}
 
-{## Track files ##}
-{%  if vrrp_instance_def.track_files is defined %}
+{##- Track files ##}
+{%-  if vrrp_instance_def.track_files is defined %}
+
   track_file {
 {%    for track_file in vrrp_instance_def.track_files %}
     track_{{ track_file }}
@@ -97,16 +104,19 @@ vrrp_instance VI_{{ vrrp_instance_name | upper }} {
   }
 {%  endif %}
 
-{## Track scripts ##}
-{%  if vrrp_instance_def.track_scripts is defined %}
+{##- Track scripts ##}
+{%-  if vrrp_instance_def.track_scripts is defined %}
+
   track_script {
 {%    for track_script in vrrp_instance_def.track_scripts %}
     track_{{ track_script }}
 {%    endfor %}
   }
 {%  endif %}
-{# Notify #}
-{%  if vrrp_instance_def.notify %}
+
+{#- Notify #}
+{%-  if vrrp_instance_def.notify is defined %}
+
   notify {{ vrrp_instance_def.notify }}
 {% endif %}
 }

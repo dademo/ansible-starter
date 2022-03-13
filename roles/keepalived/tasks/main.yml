@@ -5,7 +5,7 @@
 
 - name: Configuring Keepalived
   template:
-    source: keepalived.conf.j2
+    src: keepalived.conf.j2
     dest: /etc/keepalived/keepalived.conf
     owner: root
     group: root
