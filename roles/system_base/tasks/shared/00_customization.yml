@@ -1,5 +1,9 @@
 ---
 
+- name: Setting host name
+  hostname:
+    name: "{{ inventory_hostname }}"
+
 - name: Adding ZSH theme (zshrc)
   get_url:
     url: '{{ zshrc_url }}'
@@ -11,4 +15,3 @@
   when:
     - zshrc_url is defined
     - zshrc_url | default('', True) | length > 0
-

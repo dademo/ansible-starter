@@ -1,0 +1,7 @@
+---
+- name: Installing keepalived
+  dnf:
+    name: keepalived
+    state: present
+    update_cache: yes
+

@@ -3,15 +3,19 @@
 - name: Gathering all facts
   include_tasks: 00_facts.yml
 
-- name: Debian hosts setup
-  include_tasks: debian/main.yml
-  when:
-    - ansible_facts['os_family'] == 'Debian'
+- name: Checking if configuration exists
+  stat:
+    path: "{{ role_path }}/tasks/{{ ansible_facts.os_family }}/main.yml"
+    get_attributes: no
+    get_checksum: no
+    get_mime: no
+  register: include_stats
+  delegate_to: localhost
+  become: no
 
-- name: RHEL hosts setup
-  include_tasks: rhel/main.yml
-  when:
-    - ansible_facts['os_family'] == 'RedHat'
+- name: Running specific delegate setup
+  include_tasks: "{{ ansible_facts.os_family }}/main.yml"
+  when: include_stats.stat.exists and include_stats.stat.isreg
 
 - name: Common tasks
   import_tasks: shared/main.yml

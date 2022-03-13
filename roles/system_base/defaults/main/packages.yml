@@ -12,12 +12,12 @@ packages:
     - iotop
     - iftop
     - screen
-    - byobu
     - vim
     - fail2ban
     - cron
     - python3
     - python3-virtualenv
+    - python3-selinux
     - git
     - git-lfs
   Ubuntu:
@@ -26,12 +26,12 @@ packages:
     - iotop
     - iftop
     - screen
-    - byobu
     - vim
     - fail2ban
     - cron
     - python3
     - python3-virtualenv
+    - python3-selinux
     - git
     - git-lfs
   RedHat:
@@ -40,12 +40,13 @@ packages:
     - iotop
     - iftop
     - screen
-    - byobu
     - vim
     - fail2ban-all
     - cronie
     - python3
     - python3-virtualenv
+    - python3-libselinux
+    - python3-policycoreutils
     - git
     - git-lfs
   CentOS:
@@ -54,12 +55,13 @@ packages:
     - iotop
     - iftop
     - screen
-    - byobu
     - vim
     - fail2ban-all
     - cronie
     - python3
     - python3-virtualenv
+    - python3-libselinux
+    - python3-policycoreutils
     - git
     - git-lfs
   Fedora:
@@ -68,12 +70,13 @@ packages:
     - iotop
     - iftop
     - screen
-    - byobu
     - vim
     - fail2ban-all
     - cronie
     - python3
     - python3-virtualenv
+    - python3-libselinux
+    - python3-policycoreutils
     - git
     - git-lfs
 

@@ -1,0 +1,7 @@
+---
+- name: Installing keepalived
+  apt:
+    name: keepalived
+    state: present
+    update_cache: yes
+

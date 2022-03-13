@@ -17,20 +17,20 @@
       - '{{ sshd_port | default(None) }}'
       - 22
 
-- name: Installing Nexus
-  hosts: "{{ host_override | default('nexus') }}"
-  gather_facts: no
-  remote_user: ansible
-  become: yes
-  become_user: root
-  become_method: sudo
-  tags:
-    - nexus
-  roles:
-    - ssh_guard
-    - nexus
-  vars:
-    ssh_check_ports:
-      - '{{ sshd_port | default(None) }}'
-      - 22
+#- name: Installing Nexus
+#  hosts: "{{ host_override | default('nexus') }}"
+#  gather_facts: no
+#  remote_user: ansible
+#  become: yes
+#  become_user: root
+#  become_method: sudo
+#  tags:
+#    - nexus
+#  roles:
+#    - ssh_guard
+#    - nexus
+#  vars:
+#    ssh_check_ports:
+#      - '{{ sshd_port | default(None) }}'
+#      - 22
 

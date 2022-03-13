@@ -35,3 +35,7 @@ default_users:
 
 sudo_users_ignore:
   - root
+
+selinux_policies:
+  Debian: default
+  RedHat: targeted

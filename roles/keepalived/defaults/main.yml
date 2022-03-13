@@ -1,0 +1,43 @@
+---
+keepalived:
+  vrrp_track_processes: {}
+  # haproxy:
+  #   name: haproxy
+  #   weight: 1
+  #   param_match: initial
+  #   quorum: 1
+  #   quorum_max: 1
+  #   delay: 5
+  #   fork_delay: 5
+  #   terminate_delay: 5
+  vrrp_track_files: {}
+  # haproxy:
+  #   /run/haproxy.pid
+  vrrp_track_scripts: {}
+  # haproxy:
+  #   script: kill -0 haproxy
+  #   interval: 1
+  #   timeout: 1
+  #   rise: 1
+  #   fall: 1
+  vrrp: {}
+  # haproxy:
+  #   virtual_router_id: 50
+  #   virtual_ipaddresses:
+  #     - address: 172.17.2.1
+  #       netmask: 255.255.255.0
+  #       interface: eth0
+  #   state_override: BACKUP
+  #   priority: 1
+  #   interface: eth0
+  #   sync_interface: eth0
+  #   dvert_int: 5
+  #   track_interfaces:
+  #     - eth0
+  #   track_files:
+  #     - haproxy
+  #   track_processes:
+  #     - haproxy
+  #   track_scripts:
+  #     - haproxy
+  #   notify: "echo OK >> /dev/stderr"

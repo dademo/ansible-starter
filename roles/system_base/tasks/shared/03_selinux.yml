@@ -1,0 +1,12 @@
+---
+
+- name: Enabling selinux
+  selinux:
+    policy: "{{ selinux_policy | default(selinux_policies[ansible_facts.os_family]) }}"
+    state: enforcing
+  register: selinux_state
+  when: "ansible_facts.os_family != 'Debian' or ansible_facts.selinux.status == 'enabled'"
+
+- name: Reboot
+  reboot: {}
+  when: selinux_state.reboot_required | default(False)

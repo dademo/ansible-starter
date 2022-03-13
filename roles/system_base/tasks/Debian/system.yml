@@ -1,0 +1,19 @@
+---
+
+- name: Updating all packages
+  apt:
+    name: '*'
+    state: latest
+    update_cache: yes
+
+- name: Intalling required packages
+  apt:
+    name: "{{ packages[ansible_facts['distribution']] }}"
+    state: present
+    update_cache: yes
+  register: package_update
+
+- name: Restarting on update
+  reboot: {}
+  when: package_update.changed
+

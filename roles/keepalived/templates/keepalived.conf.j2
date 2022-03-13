@@ -1,0 +1,115 @@
+{#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
+
+{# Tracking definitions #}
+{% for track_process_name, track_process_def in (keepalived.vrrp_track_processes | default({})).items() %}
+vrrp_track_process track_{{ track_process_name | replace(' ', '_') }} {
+  process {{ track_process_def.name }}
+{%  if track_process_def.weight is defined %}
+  weight {{ track_process_def.weight }}
+{%  endif %}
+{%  if track_process_def.param_match is defined %}
+  param_match {{ track_process_def.param_match }}
+{%  endif %}
+  quorum {{ track_process_def.quorum | default(1) }}
+{%  if track_process_def.quorum_max is defined %}
+  quorum_max {{ track_process_def.quorum_max }}
+{%  endif %}
+{%  if track_process_def.delay is defined %}
+  delay {{ track_process_def.delay }}
+{%  endif %}
+{%  if track_process_def.fork_delay is defined %}
+  fork_delay {{ track_process_def.fork_delay }}
+{%  endif %}
+{%  if track_process_def.terminate_delay is defined %}
+  terminate_delay {{ track_process_def.terminate_delay }}
+{%  endif %}
+}
+
+{% endfor %}
+
+{% for track_script_name, track_script_def in (keepalived.vrrp_track_scripts | default({})).items() %}
+vrrp_track_script track_{{ track_script_name | replace(' ', '_') }} {
+  script {{ track_script_def.script }}
+  interval {{ track_script_def.interval | default(1) }}
+  timeout {{ track_script_def.timeout | default(5) }}
+{%  if track_script_def.rise is defined %}
+  rise {{ track_script_def.rise }}
+{% endif %}
+{%  if track_script_def.fall is defined %}
+  fall {{ track_script_def.fall }}
+{%  endif %}
+}
+{% endfor %}
+
+{% for track_file_name, track_file_def in (keepalived.vrrp_track_files | default({})).items() %}
+vrrp_track_file track_{{ track_file_name | replace(' ', '_') }} {
+  file {{ track_file_def.name }}
+}
+{% endfor %}
+
+
+{# VRRP definitions #}
+{% for vrrp_instance_name, vrrp_instance_def in (keepalived.vrrp | default({})).items() %}
+vrrp_instance VI_{{ vrrp_instance_name | upper }} {
+
+  state {{ rrp_instance_def.state_override | default('BACKUP') }}
+  priority {{ vrrp_instance_def.priority | default(1) }}
+  nopreempt
+
+  interface {{ vrrp_instance_def.interface | default(ansible_default_ipv4.interface) }}
+{%  if vrrp_instance_def.sync_interface is defined %}
+  lvs_sync_daemon_interface {{ vrrp_instance_def.sync_interface }}
+{%  endif %}
+  virtual_router_id {{ vrrp_instance_def.virtual_router_id }}
+  advert_int {{ vrrp_instance_def.advert_int | default(5) }}
+
+  virtual_ipaddress {
+{%   for vip in vrrp_instance_def.virtual_ipaddresses %}
+    {{ vip.address | ansible.netcommon.ipaddr('address') }}/{{ vip.address | ansible.netcommon.ipaddr('prefix') | default(vip.netmask | ansible.netcommon.ipaddr('netmask')) }} dev {{ vip.interface | default(vrrp_instance_def.interface | default(ansible_default_ipv4.interface)) }} scope global
+{%   endfor %}
+  }
+
+{# Track configurations #}
+{## Track network interfaces ##}
+{%  if vrrp_instance_def.track_interfaces is defined %}
+  track_interface {
+{%    for track_interface in vrrp_instance_def.track_interfaces %}
+    {{ track_interface.name }} 
+{%    endfor %}   
+  }
+{%  endif %}
+
+{## Track processes ##}
+{%  if vrrp_instance_def.track_processes is defined %}
+  track_process {
+{%    for track_process in vrrp_instance_def.track_processes %}
+    track_{{ track_process }}
+{%    endfor %}
+  }
+{%  endif %}
+
+{## Track files ##}
+{%  if vrrp_instance_def.track_files is defined %}
+  track_file {
+{%    for track_file in vrrp_instance_def.track_files %}
+    track_{{ track_file }}
+{%    endfor %}
+  }
+{%  endif %}
+
+{## Track scripts ##}
+{%  if vrrp_instance_def.track_scripts is defined %}
+  track_script {
+{%    for track_script in vrrp_instance_def.track_scripts %}
+    track_{{ track_script }}
+{%    endfor %}
+  }
+{%  endif %}
+{# Notify #}
+{%  if vrrp_instance_def.notify %}
+  notify {{ vrrp_instance_def.notify }}
+{% endif %}
+}
+
+{% endfor %}
+

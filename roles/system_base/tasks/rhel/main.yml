@@ -1,8 +1,0 @@
----
-
-- name: Adding repositories
-  import_tasks: repositories.yml
-
-- name: System configuration
-  import_tasks: system.yml
-

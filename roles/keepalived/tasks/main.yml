@@ -1,0 +1,21 @@
+---
+
+- name: Installing Keepalived
+  include_tasks: "setup/{{ ansible_facts.os_family | lower }}.yml"
+
+- name: Configuring Keepalived
+  template:
+    source: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: '600'
+    backup: yes
+  notify: restart keepalived
+
+- name: Enabling keepalived
+  systemd:
+    name: keepalived
+    enabled: yes
+    daemon_reload: yes
+
