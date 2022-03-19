@@ -1,13 +1,13 @@
 ---
 
 - name: Adding repositories
-  include_tasks: repositories.yml
+  include_tasks: repositories.yaml
 
 - name: System configuration
-  include_tasks: system.yml
+  include_tasks: system.yaml
 
 - name: NTP configuration
-  include_tasks: ntp.yml
+  include_tasks: ntp.yaml
 
 - name: Defaults configuration
-  include_tasks: defaults.yml
+  include_tasks: defaults.yaml

@@ -1,11 +1,11 @@
 ---
 
 - name: Gathering all facts
-  include_tasks: 00_facts.yml
+  include_tasks: 00_facts.yaml
 
 - name: Checking if configuration exists
   stat:
-    path: "{{ role_path }}/tasks/{{ ansible_facts.os_family }}/main.yml"
+    path: "{{ role_path }}/tasks/{{ ansible_facts.os_family }}/main.yaml"
     get_attributes: no
     get_checksum: no
     get_mime: no
@@ -14,8 +14,8 @@
   become: no
 
 - name: Running specific delegate setup
-  include_tasks: "{{ ansible_facts.os_family }}/main.yml"
+  include_tasks: "{{ ansible_facts.os_family }}/main.yaml"
   when: include_stats.stat.exists and include_stats.stat.isreg
 
 - name: Common tasks
-  import_tasks: shared/main.yml
+  import_tasks: shared/main.yaml

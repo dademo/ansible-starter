@@ -2,7 +2,7 @@
 
 # https://docs.fedoraproject.org/en-US/epel/
 - name: Repositories | Adding EPEL
-  include_tasks: epel.yml
+  include_tasks: epel.yaml
   when:
     - repos.epel | default(False)
     - ansible_facts['distribution'] in ['CentOS', 'RedHat']

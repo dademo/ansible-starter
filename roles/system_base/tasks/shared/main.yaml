@@ -1,27 +1,27 @@
 ---
 
 - name: Applying customizations
-  import_tasks: 00_customization.yml
+  import_tasks: 00_customization.yaml
 
 - name: Creating groups and users
-  import_tasks: 01_users.yml
+  import_tasks: 01_users.yaml
 
 - name: Creating sudo roles
-  import_tasks: 02_sudo.yml
+  import_tasks: 02_sudo.yaml
 
 - name: Enabling selinux
-  import_tasks: 03_selinux.yml
+  import_tasks: 03_selinux.yaml
 
 - name: Enabling firewall
-  include_tasks: 04_firewalld.yml
+  include_tasks: 04_firewalld.yaml
   when: firewalld_enabled | default(True)
 
 - name: Configuring fail2ban
-  import_tasks: 05_fail2ban.yml
+  import_tasks: 05_fail2ban.yaml
 
 - name: Configuring SSH daemon
-  import_tasks: 06_sshd.yml
+  import_tasks: 06_sshd.yaml
 
 - name: Configuring virtual machines
-  import_tasks: 07_virutal_machines.yml
+  import_tasks: 07_virutal_machines.yaml
 

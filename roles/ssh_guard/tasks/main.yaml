@@ -5,7 +5,7 @@
     ssh_port_valid: False
 
 - name: Running check
-  include_tasks: check.yml
+  include_tasks: check.yaml
   loop: '{{ ssh_check_ports | default([22]) }}'
   loop_control:
     loop_var: ssh_port

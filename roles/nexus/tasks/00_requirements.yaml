@@ -2,7 +2,7 @@
 
 - name: Loading assertion messages
   include_vars:
-    file: assertions.yml
+    file: assertions.yaml
 
 - name: Gathering system facts
   setup:

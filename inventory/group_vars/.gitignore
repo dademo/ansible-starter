@@ -2,4 +2,4 @@
 !.gitignore
 !all
 !all/**
-!nexus.yml
+!nexus.yaml

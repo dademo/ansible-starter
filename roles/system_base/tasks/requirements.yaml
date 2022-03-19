@@ -2,7 +2,7 @@
 
 - name: Loading assertion messages
   include_vars:
-    file: assertions.yml
+    file: assertions.yaml
 
 - name: Facts must have been fetched
   assert:
