@@ -21,6 +21,11 @@
     state: present
   when: "ansible_facts.selinux.status == 'enabled'"
 
+- name: Regenerating SSH keys
+  command:
+    cmd: ssh-keygen -A
+    creates: /etc/ssh/.ansible_keygen
+
 - name: Configuring SSH | Configuring SSH daemon
   template:
     src: ssh/sshd_config.j2
