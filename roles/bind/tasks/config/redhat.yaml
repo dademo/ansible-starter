@@ -1,0 +1,16 @@
+---
+
+- name: Applying bind templates
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '640'
+    backup: yes
+  loop:
+    - src: redhat/named.conf.j2
+      dest: "/etc/named.conf"
+
+- name: Applying shared configurations
+  include_tasks: config/shared.yaml

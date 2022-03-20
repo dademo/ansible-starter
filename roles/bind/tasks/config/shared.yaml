@@ -1,0 +1,56 @@
+---
+
+- name: Configuring zones.conf
+  template:
+    src: "zones.conf.j2"
+    dest: "{{ bind_config_dir }}/zones.conf"
+    owner: root
+    group: root
+    mode: '640'
+    backup: yes
+
+- name: Configuring zones
+  template:
+    src: "db.zone.conf.j2"
+    dest: "{{ bind_config_dir }}/db.{{ zone_def.zone }}"
+    owner: root
+    group: root
+    mode: '640'
+    backup: yes
+  loop: "{{ ([play_host_zone_def] + play_bind.zones | default([])) }}"
+  loop_control:
+    loop_var: zone_def
+    label: "{{ zone_def.zone }}"
+
+- name: Configuring reverse zones
+  template:
+    src: "db.zone-inv.conf.j2"
+    dest: |-
+      {%- set _reverse_zone_network = (
+                                        (
+                                          zone_def.network |
+                                          ansible.netcommon.ipaddr('network')
+                                        ).split('.') |
+                                        list
+                                      )[
+                                        0
+                                        :
+                                        (
+                                          (zone_def.network                       |
+                                          ansible.netcommon.ipaddr('prefix') / 8) |
+                                          round(method='ceil')                    |
+                                          int
+                                        )
+                                      ] | join('.')
+      -%}
+      {{ bind_config_dir }}/{{ _reverse_zone_network }}.in-addr.arpa
+    owner: root
+    group: root
+    mode: '640'
+    backup: yes
+  loop: "{{ ([play_host_zone_def] + play_bind.zones | default([])) }}"
+  loop_control:
+    loop_var: zone_def
+    label: "{{ zone_def.zone }}"
+  when: zone_def.reverse
+

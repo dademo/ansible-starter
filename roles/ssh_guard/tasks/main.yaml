@@ -9,6 +9,7 @@
   loop: '{{ ssh_check_ports | default([22]) }}'
   loop_control:
     loop_var: ssh_port
+    label: "Port {{ ssh_port }}"
   when:
     - ssh_port | default(0, True) | int > 0
 

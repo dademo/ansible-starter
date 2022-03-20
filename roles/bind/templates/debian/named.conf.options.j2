@@ -1,0 +1,58 @@
+{#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
+options {
+	directory "/var/cache/bind";
+
+	// If there is a firewall between you and nameservers you want
+	// to talk to, you may need to fix the firewall to allow multiple
+	// ports to talk.  See http://www.kb.cert.org/vuls/id/800113
+
+	// If your ISP provided one or more IP addresses for stable 
+	// nameservers, you probably want to use them as forwarders.  
+	// Uncomment the following block, and insert the addresses replacing 
+	// the all-0's placeholder.
+
+	// forwarders {
+	// 	0.0.0.0;
+	// };
+
+	//========================================================================
+	// If BIND logs error messages about the root key being expired,
+	// you will need to update your keys.  See https://www.isc.org/bind-keys
+	//========================================================================
+	dnssec-validation auto;
+
+  listen-on port 53 {
+{%  if play_bind.listen_addresses is defined %}
+{# We only allow addresses here #}
+    127.0.0.1;
+{%  for address in (play_bind.listen_addresses | ansible.netcommon.ipv4) %}
+    {{ address | ansible.netcommon.ipaddr('address') }}/{{ address | ansible.netcommon.ipaddr('prefix') | default(32) }};
+{% else %}
+    any;
+{%  endfor %}
+{% endif %}
+  };
+
+// We won't listen IPv6 addresses
+//	listen-on-v6 { any; };
+  filter-aaaa-on-v4 yes;
+
+  allow-query     {
+    localhost;
+  };
+  allow-transfer  {
+{%  for host in play_secondary_hosts %}
+    {{ host }};
+{%  endfor %}
+  }
+  allow-notify    {
+{%  for host in play_secondary_hosts %}
+    {{ host }};
+{%  endfor %}
+  }
+
+  recursion no;
+  dnssec-validation yes;
+  version none;
+};
+

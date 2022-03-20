@@ -11,7 +11,7 @@ haproxy_defaults:
       facility: local0
       # any of [ emerg, alert, crit, err, warning, notice, info, debug ]
       level: info
-    nbproc: "{{ (ansible_processor_vcpus | default(ansible_processor_cores | default(1))) / 2 | round('ceil') | int }}"
+    nbproc: "{{ (ansible_processor_vcpus | default(ansible_processor_cores | default(1))) / 2 | round(method='ceil') | int }}"
     pidfile: /run/haproxy.pid
     node: "{{ ansible_nodename }}"
     # Note: Should be later escaped for HTML

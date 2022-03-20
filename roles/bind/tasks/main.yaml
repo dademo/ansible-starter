@@ -1,0 +1,75 @@
+---
+# tasks file for bind
+- name: Setting facts (1/2)
+  set_fact:
+    play_bind: "{{ bind | combine(host_bind | default({})) }}"
+    play_secondary_hosts: |-
+      {%- set _secondary_hosts = [] -%}
+      {%- for _play_host in ansible_play_hosts_all -%}
+      {%-   set _play_host_play_bind = hostvars[_play_host]['bind'] |
+                                        combine(hostvars[_play_host]['host_bind'] | default({}))
+      -%}
+      {%-   if not _play_host_play_bind.primary | default(False) -%}
+      {{-     _secondary_hosts.append(hostvars[_play_host]['inventory_hostname']) -}}
+      {%-   endif -%}
+      {%- endfor -%}
+      {{- _secondary_hosts -}}
+
+    _host_zone_primary_dns: |-
+      {%- set _primary_hosts = [] -%}
+      {%- for _play_host in ansible_play_hosts_all -%}
+      {%-   set _play_host_play_bind = hostvars[_play_host]['bind'] |
+                                        combine(hostvars[_play_host]['host_bind'] | default({}))
+      -%}
+      {%-   if _play_host_play_bind.primary | default(False) -%}
+      {{-     _primary_hosts.append(hostvars[_play_host]['inventory_hostname']) -}}
+      {%-   endif -%}
+      {%- endfor -%}
+      {{- _primary_hosts | first -}}
+    _host_zone_entries: |-
+      {%- set _entries = [] -%}
+      {%- for _play_host in ansible_play_hosts_all -%}
+      {{- _entries.append({
+          'name': hostvars[_play_host]['inventory_hostname'] + '.',
+          'type': 'A',
+          'target': hostvars[_play_host]['ansible_facts']['default_ipv4']['address'],
+        })
+      -}}
+      {%- endfor -%}
+      {{ _entries }}
+
+- name: Setting facts (2/2)
+  set_fact:
+    play_host_zone_def:
+      zone: "{{ play_bind.host_zone.zone }}"
+      entries: "{{ _host_zone_entries }}"
+      type: "{{ play_bind.primary | ternary('primary', 'secondary') }}"
+      reverse: "{{ play_bind.host_zone.reverse | default(False) }}"
+      allow_query: "{{ play_bind.host_zone.allow_query | default([]) }}"
+      allow_reverse_query: "{{ play_bind.host_zone.allow_query | default([]) }}"
+      network: "{{ play_bind.host_zone.network | default('0.0.0.0/1') }}"
+      TTL: "{{ play_bind.host_zone.TTL | default(3600) }}"
+      admin: "{{ play_bind.host_zone.admin | default('admin.' + play_bind.host_zone.zone) }}"
+      primary_dns_name: "{{ _host_zone_primary_dns }}"
+      refresh: "{{ play_bind.host_zone.refresh | default(play_bind.host_zone.TTL | default(3600)) }}"
+      retry: "{{ play_bind.host_zone.retry | default((play_bind.host_zone.TTL | default(3600)) / 10) }}"
+      expire: "{{ play_bind.host_zone.expire | default(play_bind.host_zone.TTL | default(3600)) }}"
+      negative_cache_ttl: "{{ play_bind.host_zone.negative_cache_ttl | default((play_bind.host_zone.TTL | default(3600)) / 10) }}"
+
+- name: Installing software
+  include_tasks: "setup/{{ ansible_facts.os_family | lower }}.yaml"
+
+- name: Configuring Bind
+  include_tasks: "config/{{ ansible_facts.os_family | lower }}.yaml"
+
+- name: Reload Bind
+  systemd:
+    name: "{{ bind_software_name }}"
+    state: reloaded
+
+- name: Starting Bind
+  systemd:
+    name: "{{ bind_software_name }}"
+    state: started
+    enabled: yes
+

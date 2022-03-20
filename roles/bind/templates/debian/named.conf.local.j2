@@ -1,0 +1,12 @@
+{#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
+//
+// Do any local configuration here
+//
+
+// Consider adding the 1918 zones here, if they are not used in your
+// organization
+//include "{{ bind_config_dir }}/zones.rfc1918";
+
+include "{{ bind_config_dir }}/named.conf.acl";
+include "{{ bind_config_dir }}/named.conf.zones";
+

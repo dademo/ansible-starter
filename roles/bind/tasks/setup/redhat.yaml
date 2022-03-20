@@ -1,0 +1,9 @@
+---
+
+- name: Installing Bind9 and utilities
+  dnf:
+    name:
+      - bind
+      - bind-utils
+    state: present
+    update_cache: yes

@@ -1,0 +1,12 @@
+#!/usr/bin/env ansible-playbook
+
+- name: Adding keepalived
+  hosts: "{{ host_override | default('proxy') }}"
+  gather_facts: yes
+  become: yes
+  become_user: root
+  become_method: sudo
+  tags:
+    - keepalived
+  roles:
+    - keepalived

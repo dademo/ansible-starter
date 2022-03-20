@@ -1,0 +1,22 @@
+---
+
+- name: Applying bind templates
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '640'
+    backup: yes
+  loop:
+    - src: debian/named.conf.j2
+      dest: "{{ bind_config_dir }}/named.conf"
+    - src: debian/named.conf.options.j2
+      dest: "{{ bind_config_dir }}/named.conf.options"
+    - src: debian/named.conf.local.j2
+      dest: "{{ bind_config_dir }}/named.conf.local"
+    - src: debian/named.conf.acl.j2
+      dest: "{{ bind_config_dir }}/named.conf.acl"
+
+- name: Applying shared configurations
+  include_tasks: config/shared.yaml

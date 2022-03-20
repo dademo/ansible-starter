@@ -1,0 +1,19 @@
+---
+# vars file for bind
+bind_software_name: |-
+  {%- if ansible_facts.os_family == 'Debian' -%}
+    bind9
+  {%- elif ansible_facts.os_family == 'RedHat' -%}
+    named
+  {%- else -%}
+    undef(hint='Only Debian and RedHat are supported for this role')
+  {%- endif -%}
+
+bind_config_dir: |-
+  {%- if ansible_facts.os_family == 'Debian' -%}
+    /etc/bind
+  {%- elif ansible_facts.os_family == 'RedHat' -%}
+     /etc/named
+  {%- else -%}
+    undef(hint='Only Debian and RedHat are supported for this role')
+  {%- endif -%}
