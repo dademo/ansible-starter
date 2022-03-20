@@ -88,8 +88,8 @@ zone "{{ _reverse_zone_network }}.in-addr.arpa" {
 {%  endif %}
 {%  if zone_def.allow_reverse_query is defined and not _zone_type == 'primary' %}
   allow-query {
-{%    for allowed_source in zone_def.allow_reverse_query %}
-    {{ allowed_source }};
+{%    for _allowed_source in zone_def.allow_reverse_query %}
+    {{ _allowed_source }};
 {%    endfor %}
   };
 {%  endif %}

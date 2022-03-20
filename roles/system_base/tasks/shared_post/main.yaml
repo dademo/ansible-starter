@@ -1,0 +1,18 @@
+---
+
+- name: Enabling selinux
+  import_tasks: 00_selinux.yaml
+
+- name: Enabling firewall
+  include_tasks: 01_firewalld.yaml
+  when: firewalld_enabled | default(True)
+
+- name: Configuring fail2ban
+  import_tasks: 02_fail2ban.yaml
+
+- name: Configuring SSH daemon
+  import_tasks: 03_sshd.yaml
+
+- name: Configuring virtual machines
+  import_tasks: 04_virutal_machines.yaml
+

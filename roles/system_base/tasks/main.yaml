@@ -3,6 +3,9 @@
 - name: Gathering all facts
   include_tasks: 00_facts.yaml
 
+- name: Running generic pre tasks
+  include_tasks: shared_pre/main.yaml
+
 - name: Checking if configuration exists
   stat:
     path: "{{ role_path }}/tasks/{{ ansible_facts.os_family }}/main.yaml"
@@ -18,4 +21,4 @@
   when: include_stats.stat.exists and include_stats.stat.isreg
 
 - name: Common tasks
-  import_tasks: shared/main.yaml
+  import_tasks: shared_post/main.yaml

@@ -8,6 +8,3 @@
 
 - name: NTP configuration
   include_tasks: ntp.yaml
-
-- name: Defaults configuration
-  include_tasks: defaults.yaml

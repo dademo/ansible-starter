@@ -10,14 +10,14 @@
 {% for acl_name, acl_entries in (play_bind.acl | default({})).items() %}
 
 acl {{ acl_name }} {
-{%  for acl_entry in acl_entries %}
-  {{ acl_entry }};
+{%  for _acl_entry in acl_entries %}
+  {{ _acl_entry }};
 {%  endfor %}
 };
 {% endfor %}
 
 options {
-  listen-on port 53 {
+  listen-on {
 {%  if play_bind.listen_addresses is defined %}
 {# We only allow addresses here #}
     127.0.0.1;
@@ -37,20 +37,32 @@ options {
   memstatistics-file "/var/named/data/named_mem_stats.txt";
   secroots-file  "/var/named/data/named.secroots";
   recursing-file  "/var/named/data/named.recursing";
-  allow-query     {
+
+  allow-query {
 {%  if play_bind.primary | default(False) %}
     localhost;
 {%  else %}
-{%    for _secondary_host in play_secondary_hosts %}
-    {{ _secondary_host }};
+{%    for _allowed_source in play_bind.allowed_query_sources | default(['any']) %}
+    {{ _allowed_source }};
 {%    endfor %}
 {%  endif %}
   };
+
+{%  if not play_bind.primary | default(False) %}
+  allow-recursion {
+{%    for _allowed_source in play_bind.allowed_query_sources | default([]) %}
+    {{ _allowed_source }};
+{%    endfor %}
+  };
+{%  endif %}
+
+{%  if play_bind.primary | default(False) %}
   allow-transfer  {
 {%  for host in play_secondary_hosts %}
     {{ host }};
 {%  endfor %}
   };
+{% endif %}
 
   /* 
    - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
@@ -62,9 +74,28 @@ options {
      attacks. Implementing BCP38 within your network would greatly
      reduce such attack surface 
   */
+{%  if play_bind.primary | default(False) %}
   recursion no;
+{%  elif play_bind.forwarders | default([]) | length > 0 %}
+  recursion yes;
+  forwarders {
+{%    for forwarder in play_bind.forwarders | default([]) %}
+    {{ forwarder }};
+{%    endfor %}
+  };
+{%  else %}
+  recursion no;
+{%  endif %}
 
+{% if play_bind.max_cache_ttl_seconds is defined %}
+  max-cache-ttl {{ play_bind.max_cache_ttl_seconds }};
+{% endif %}
+
+{%  if play_bind.dnssec_validation | default(True) %}
   dnssec-validation yes;
+{% else %}
+  dnssec-validation no;
+{% endif %}
 
   managed-keys-directory "/var/named/dynamic";
   geoip-directory "/usr/share/GeoIP";

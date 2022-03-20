@@ -28,13 +28,21 @@
       {{- _primary_hosts | first -}}
     _host_zone_entries: |-
       {%- set _entries = [] -%}
-      {%- for _play_host in ansible_play_hosts_all -%}
-      {{- _entries.append({
+      {%- for _play_host in groups['all'] -%}
+      {%-   if hostvars[_play_host]['ansible_host'] | ansible.netcommon.ipv4 %}
+      {%-     set _ip = hostvars[_play_host]['ansible_host'] -%}
+      {%-   else -%}
+      {%-     set _ip = lookup('dig', hostvars[_play_host]['ansible_host']) -%}
+      {%-   endif %}
+      {#- Only resolvable names -#}
+      {%- if _ip | ansible.netcommon.ipv4 %}
+      {{-   _entries.append({
           'name': hostvars[_play_host]['inventory_hostname'] + '.',
           'type': 'A',
-          'target': hostvars[_play_host]['ansible_facts']['default_ipv4']['address'],
+          'target': _ip,
         })
       -}}
+      {%-   endif %}
       {%- endfor -%}
       {{ _entries }}
 
