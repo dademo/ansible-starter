@@ -77,6 +77,15 @@
     - "'firewalld.service' in ansible_facts['services']"
     - "ansible_facts['services']['firewalld.service']['state'] == 'running'"
 
+- name: Allowing zone update
+  ansible.posix.seboolean:
+    name: named_write_master_zones
+    persistent: yes
+    state: yes
+  when:
+    - not play_bind.primary | default(False)
+    - "ansible_facts.os_family != 'Debian' or ansible_facts.selinux.status == 'enabled'"
+
 - name: Configuring Bind
   include_tasks: "config/{{ ansible_facts.os_family | lower }}.yaml"
 
