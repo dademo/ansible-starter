@@ -8,3 +8,4 @@
       - dnsutils
     state: present
     update_cache: yes
+  register: bind_install

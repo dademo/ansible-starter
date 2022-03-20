@@ -31,16 +31,6 @@ zone "{{ zone_def.zone }}" {
     {{ _secondary_host }};
 {%    endfor %}
   };
-  allow-notify {
-{%    for _secondary_host in _secondary_hosts %}
-    {{ _secondary_host }};
-{%    endfor %}
-  };
-  also-notify {
-{%    for _secondary_host in _secondary_hosts %}
-    {{ _secondary_host }};
-{%    endfor %}
-  };
 {% else %}
   primaries {
 {%    for _primary_host in _primary_hosts %}
@@ -58,7 +48,7 @@ zone "{{ zone_def.zone }}" {
 {%  if zone_def.customs is defined %}
   {{ zone_def.customs | indent(2) }}
 {%  endif %}
-}
+};
 {% if zone_def.reverse | default(False) %}
 {%- set _reverse_zone_network = (
                                   (
@@ -70,12 +60,13 @@ zone "{{ zone_def.zone }}" {
                                   0
                                   :
                                   (
-                                    (zone_def.network                       |
-                                    ansible.netcommon.ipaddr('prefix') / 8) |
-                                    round(method='ceil')                    |
+                                    (zone_def.network | ansible.netcommon.ipaddr('prefix') / 8) |
+                                    round(method='ceil')                                        |
                                     int
                                   )
-                                ] | join('.')
+                                ]         |
+                                reverse   |
+                                join('.')
 %}
 
 zone "{{ _reverse_zone_network }}.in-addr.arpa" {
@@ -84,16 +75,6 @@ zone "{{ _reverse_zone_network }}.in-addr.arpa" {
 {%  if _zone_type == 'primary' %}
   notify yes;
   allow-transfer {
-{%    for _secondary_host in _secondary_hosts %}
-    {{ _secondary_host }};
-{%    endfor %}
-  };
-  allow-notify {
-{%    for _secondary_host in _secondary_hosts %}
-    {{ _secondary_host }};
-{%    endfor %}
-  };
-  also-notify {
 {%    for _secondary_host in _secondary_hosts %}
     {{ _secondary_host }};
 {%    endfor %}
@@ -115,6 +96,6 @@ zone "{{ _reverse_zone_network }}.in-addr.arpa" {
 {%  if zone_def.customs_inv is defined %}
   {{ zone_def.customs | indent(2) }}
 {%  endif %}
-}
+};
 {%  endif %}
 {% endfor %}

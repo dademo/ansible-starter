@@ -5,6 +5,6 @@ acl {{ acl_name }} {
 {%  for acl_entry in acl_entries %}
   {{ acl_entry }};
 {%  endfor %}
-}
+};
 {% endfor %}
 

@@ -13,7 +13,7 @@ acl {{ acl_name }} {
 {%  for acl_entry in acl_entries %}
   {{ acl_entry }};
 {%  endfor %}
-}
+};
 {% endfor %}
 
 options {
@@ -23,14 +23,13 @@ options {
     127.0.0.1;
 {%  for address in (play_bind.listen_addresses | ansible.netcommon.ipv4) %}
     {{ address | ansible.netcommon.ipaddr('address') }}/{{ address | ansible.netcommon.ipaddr('prefix') | default(32) }};
+{%  endfor %}
 {% else %}
     any;
-{%  endfor %}
 {% endif %}
   };
 // We won't listen IPv6 addresses
-//  listen-on-v6 port 53 { ::1; };
-  filter-aaaa-on-v4 yes;
+  listen-on-v6 port 53 { none; };
 
   directory   "/var/named";
   dump-file   "/var/named/data/cache_dump.db";
@@ -39,18 +38,19 @@ options {
   secroots-file  "/var/named/data/named.secroots";
   recursing-file  "/var/named/data/named.recursing";
   allow-query     {
+{%  if play_bind.primary | default(False) %}
     localhost;
+{%  else %}
+{%    for _secondary_host in play_secondary_hosts %}
+    {{ _secondary_host }};
+{%    endfor %}
+{%  endif %}
   };
   allow-transfer  {
 {%  for host in play_secondary_hosts %}
     {{ host }};
 {%  endfor %}
-  }
-  allow-notify    {
-{%  for host in play_secondary_hosts %}
-    {{ host }};
-{%  endfor %}
-  }
+  };
 
   /* 
    - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
@@ -73,16 +73,16 @@ options {
   session-keyfile "/run/named/session.key";
 
   /* https://fedoraproject.org/wiki/Changes/CryptoPolicy */
-  include "/etc/crypto-policies/back-ends/play_bind.config";
+  include "/etc/crypto-policies/back-ends/bind.config";
 
   version none;
 };
 
 logging {
-        channel default_debug {
-                file "data/named.run";
-                severity dynamic;
-        };
+  channel default_debug {
+    file "data/named.run";
+    severity dynamic;
+  };
 };
 
 zone "." IN {
@@ -93,5 +93,5 @@ zone "." IN {
 include "/etc/named.rfc1912.zones";
 include "/etc/named.root.key";
 
-include "{{ bind_config_dir }}/zones.conf"
+include "{{ bind_config_dir }}/zones.conf";
 

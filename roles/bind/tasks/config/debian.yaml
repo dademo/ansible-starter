@@ -5,9 +5,9 @@
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
     owner: root
-    group: root
+    group: "{{ bind_group_name }}"
     mode: '640'
-    backup: yes
+    backup: no
   loop:
     - src: debian/named.conf.j2
       dest: "{{ bind_config_dir }}/named.conf"

@@ -5,52 +5,59 @@
     src: "zones.conf.j2"
     dest: "{{ bind_config_dir }}/zones.conf"
     owner: root
-    group: root
+    group: "{{ bind_group_name }}"
     mode: '640'
-    backup: yes
+    backup: no
 
 - name: Configuring zones
   template:
     src: "db.zone.conf.j2"
     dest: "{{ bind_config_dir }}/db.{{ zone_def.zone }}"
     owner: root
-    group: root
+    group: "{{ bind_group_name }}"
     mode: '640'
-    backup: yes
+    backup: no
+    validate: "named-checkzone {{ zone_def.zone }} %s"
   loop: "{{ ([play_host_zone_def] + play_bind.zones | default([])) }}"
   loop_control:
     loop_var: zone_def
     label: "{{ zone_def.zone }}"
+  when: play_bind.primary
 
 - name: Configuring reverse zones
   template:
     src: "db.zone-inv.conf.j2"
-    dest: |-
-      {%- set _reverse_zone_network = (
-                                        (
-                                          zone_def.network |
-                                          ansible.netcommon.ipaddr('network')
-                                        ).split('.') |
-                                        list
-                                      )[
-                                        0
-                                        :
-                                        (
-                                          (zone_def.network                       |
-                                          ansible.netcommon.ipaddr('prefix') / 8) |
-                                          round(method='ceil')                    |
-                                          int
-                                        )
-                                      ] | join('.')
-      -%}
-      {{ bind_config_dir }}/{{ _reverse_zone_network }}.in-addr.arpa
+    dest: "{{ bind_config_dir }}/db.{{ zone_def.zone }}.inv"
     owner: root
-    group: root
+    group: "{{ bind_group_name }}"
     mode: '640'
-    backup: yes
+    backup: no
+    validate: "named-checkzone {{ _reverse_zone_network }}.in-addr.arpa %s"
   loop: "{{ ([play_host_zone_def] + play_bind.zones | default([])) }}"
   loop_control:
     loop_var: zone_def
     label: "{{ zone_def.zone }}"
-  when: zone_def.reverse
-
+  vars:
+    _reverse_zone_network: |-
+      {{
+        (
+          (
+            zone_def.network |
+            ansible.netcommon.ipaddr('network')
+          ).split('.') |
+          list
+        )[
+          0
+          :
+          (
+            (zone_def.network | ansible.netcommon.ipaddr('prefix') / 8) |
+            round(method='ceil')                                        |
+            int
+          )
+        ]         |
+        reverse   |
+        join('.')
+      }}
+  when:
+    - play_bind.primary
+    - zone_def.reverse
