@@ -3,16 +3,18 @@
 
 {# Default TTL to 300 seconds == 1 hour -#}
 {%- set _TTL = zone_def.TTL | int | default(3600) -%}
-$TTL    {{ _TTL }}
+$TTL    {{ _TTL | int }}
 
 @       IN      SOA     {{ zone_def.zone }}. {{ zone_def.admin | default("admin." + zone_def.zone) }}. (
 {{ '%30s          ; Serial' | format('%Y%m%d%H' | strftime) }}
-{{ '%30s          ; Refresh' | format(zone_def.refresh | default(_TTL)) }}
-{{ '%30s          ; Retry' | format(zone_def.retry | default((_TTL )/ 10)) }}
-{{ '%30s          ; Expire' | format(zone_def.expire | default(_TTL)) }}
-{{ '%30s )        ; Negative Cache TTL' | format(zone_def.negative_cache_ttl | default((_TTL )/ 10)) }}
+{{ '%30s          ; Refresh' | format(zone_def.refresh | default(_TTL) | int) }}
+{{ '%30s          ; Retry' | format((zone_def.retry | default(_TTL / 10) | int)) }}
+{{ '%30s          ; Expire' | format(zone_def.expire | default(_TTL) | int) }}
+{{ '%30s )        ; Negative Cache TTL' | format(zone_def.negative_cache_ttl | default(_TTL / 10) | int) }}
 ;
+{% if zone_def.primary_dns_name is defined %}
 @       IN      NS      {{ zone_def.primary_dns_name }}.
+{% endif %}
 ;
 {% set _len = ((32 - (zone_def.network | ansible.netcommon.ipaddr('prefix'))) / 8)  |
                 round(method='floor')                                               |

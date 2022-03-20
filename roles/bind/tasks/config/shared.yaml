@@ -8,6 +8,19 @@
     owner: "{{ bind_group_name }}"
     mode: "{{ play_bind.primary | default(False) | ternary('750', '770') }}"
 
+- name: Listing existing files
+  find:
+    paths:
+      - "{{ bind_config_dir }}"
+    file_type: file
+  register: existing_configuration_files
+
+- name: Removing existing files
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ existing_configuration_files.files }}"
+
 - name: Configuring zones.conf
   template:
     src: "zones.conf.j2"

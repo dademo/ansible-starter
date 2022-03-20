@@ -15,7 +15,7 @@
       {%- endfor -%}
       {{- _secondary_hosts -}}
 
-    _host_zone_primary_dns: |-
+    host_zone_default_primary_dns: |-
       {%- set _primary_hosts = [] -%}
       {%- for _play_host in ansible_play_hosts_all -%}
       {%-   set _play_host_play_bind = hostvars[_play_host]['bind'] |
@@ -58,7 +58,7 @@
       network: "{{ play_bind.host_zone.network | default('0.0.0.0/1') }}"
       TTL: "{{ play_bind.host_zone.TTL | default(3600) }}"
       admin: "{{ play_bind.host_zone.admin | default('admin.' + play_bind.host_zone.zone) }}"
-      primary_dns_name: "{{ _host_zone_primary_dns }}"
+      primary_dns_name: "{{ host_zone_default_primary_dns }}"
       refresh: "{{ play_bind.host_zone.refresh | default(play_bind.host_zone.TTL | default(3600)) }}"
       retry: "{{ play_bind.host_zone.retry | default((play_bind.host_zone.TTL | default(3600)) / 10) }}"
       expire: "{{ play_bind.host_zone.expire | default(play_bind.host_zone.TTL | default(3600)) }}"
