@@ -13,12 +13,12 @@ $TTL    {{ _TTL | int }}
 {{ '%30s )        ; Negative Cache TTL' | format(zone_def.negative_cache_ttl | default(_TTL / 10) | int) }}
 ;
 {% if zone_def.primary_dns_name is defined %}
-@       IN      NS      {{ zone_def.primary_dns_name }}.
+@       IN      NS      {{ zone_def.primary_dns_name }}
 {% endif %}
 {% for _entry in zone_def.entries | selectattr('type', 'equalto', 'MX') %}
 @       IN      MX      {{ _entry.priority | default(10) }} {{ _entry.name }}.
 {% endfor %}
 ;
 {% for _entry in zone_def.entries | sort(attribute='type,name')| selectattr('type', 'ne', 'MX') %}
-{{ '%-40s     IN     %5s     %s' | format(_entry.name, _entry.type, _entry.target) }}
+{{ '%-40s     IN     %-5s     %s' | format(_entry.name, _entry.type, _entry.target) }}
 {% endfor %}

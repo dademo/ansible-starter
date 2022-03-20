@@ -13,7 +13,7 @@ $TTL    {{ _TTL | int }}
 {{ '%30s )        ; Negative Cache TTL' | format(zone_def.negative_cache_ttl | default(_TTL / 10) | int) }}
 ;
 {% if zone_def.primary_dns_name is defined %}
-@       IN      NS      {{ zone_def.primary_dns_name }}.
+@       IN      NS      {{ zone_def.primary_dns_name }}
 {% endif %}
 ;
 {% set _len = ((32 - (zone_def.network | ansible.netcommon.ipaddr('prefix'))) / 8)  |
