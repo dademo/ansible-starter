@@ -14,12 +14,14 @@
       - "{{ bind_config_dir }}"
     file_type: file
   register: existing_configuration_files
+  when: play_bind.primary
 
 - name: Removing existing files
   file:
     path: "{{ item.path }}"
     state: absent
   loop: "{{ existing_configuration_files.files }}"
+  when: play_bind.primary
 
 - name: Configuring zones.conf
   template:
