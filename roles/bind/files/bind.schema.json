@@ -1,0 +1,201 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://dademo.fr/bind.schema.json",
+    "title": "Bind role",
+    "description": "Bind role configuration schema",
+    "type": "object",
+    "properties": {
+        "primary": {
+            "name": "Primary",
+            "description": "Whether the host is a primary one (global)",
+            "type": "boolean",
+            "default": false
+        },
+        "zones": {
+            "title": "Zone",
+            "description": "Zone definition",
+            "type": "array",
+            "minItems": 0,
+            "uniqueItems": true,
+            "items": {
+                "title": "Zone-entry",
+                "description": "Zone entry definition",
+                "type": "object",
+                "required": [
+                    "zone"
+                ],
+                "properties": {
+                    "zone": {
+                        "name": "Zone zone",
+                        "description": "The zone name",
+                        "$comment": "https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/naming-conventions-for-computer-domain-site-ou",
+                        "type": "string",
+                        "pattern": "^(?:[a-zA-Z0-9-]+\\.?)*[a-z]{2}$"
+                    },
+                    "admin": {
+                        "name": "Zone admin",
+                        "description": "The zone admin name",
+                        "$comment": "https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/naming-conventions-for-computer-domain-site-ou",
+                        "type": "string",
+                        "pattern": "^(?:[a-zA-Z0-9-]+\\.?)*[a-z]{2}$"
+                    },
+                    "TTL": {
+                        "name": "Zone TTL",
+                        "description": "The time where a recond is valid (base default value for refresh, retry, expire and negative_cache_ttl)",
+                        "type": "integer",
+                        "min": 1,
+                        "default": 3600
+                    },
+                    "entries": {
+                        "name": "Zone entries",
+                        "description": "Zone entries",
+                        "type": "array",
+                        "minItems": 0,
+                        "uniqueItems": true,
+                        "items": {
+                            "name": "Zone entry",
+                            "description": "Zone entry",
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "name": "Zone entry name",
+                                    "description": "Zone entry name",
+                                    "type": "string",
+                                    "pattern": "^(?:[a-zA-Z0-9-]+\\.?)*[a-z]{2}\\.?$"
+                                },
+                                "type": {
+                                    "name": "Zone entry type",
+                                    "description": "Zone entry type",
+                                    "$comment": "https://en.wikipedia.org/wiki/List_of_DNS_record_types",
+                                    "type": "string",
+                                    "enum": [
+                                        "MX",
+                                        "A",
+                                        "CNAME",
+                                        "TXT",
+                                        "URI"
+                                    ]
+                                },
+                                "target": {
+                                    "name": "Zone entry target",
+                                    "description": "Zone entry target",
+                                    "type": "string",
+                                    "pattern": "^(?:(?:[a-zA-Z0-9-]+\\.?)*[a-z]{2})|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+                                },
+                                "priority": {
+                                    "name": "Zone entry priority",
+                                    "description": "Zone entry priority (MX only)",
+                                    "type": "integer",
+                                    "default": 10
+                                }
+                            },
+                            "anyOf": [
+                                {
+                                    "properties": {
+                                        "type": {
+                                            "not": {
+                                                "const": "MX"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "target"
+                                    ]
+                                },
+                                {
+                                    "properties": {
+                                        "type": {
+                                            "const": "MX"
+                                        }
+                                    }
+                                }
+                            ],
+                            "required": [
+                                "name",
+                                "type",
+                                "target"
+                            ]
+                        }
+                    },
+                    "primary": {
+                        "name": "Zone primary",
+                        "description": "Whether the zone is a primary one",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "reverse": {
+                        "name": "Zone reverse",
+                        "description": "Whether a reverse zone is requred",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "allow_query": {
+                        "name": "Zone allow query sources",
+                        "description": "A list of allowed sources for this zone",
+                        "type": "array",
+                        "minItems": 0,
+                        "uniqueItems": true,
+                        "items": {
+                            "name": "Zone allow query source",
+                            "description": "An allowed source for this zone",
+                            "type": "string",
+                            "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:/(?:[1-2][0-9]|3[0-2]))?$"
+                        }
+                    },
+                    "allow_reverse_query": {
+                        "name": "Zone allow reverse query sources",
+                        "description": "A list of allowed reverse sources for this zone",
+                        "type": "array",
+                        "minItems": 0,
+                        "uniqueItems": true,
+                        "items": {
+                            "name": "Zone allow reverse query source",
+                            "description": "An allowed reverse source for this zone",
+                            "type": "string",
+                            "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:/(?:[1-2][0-9]|3[0-2]))?$"
+                        }
+                    },
+                    "network": {
+                        "name": "Reverse DNS network",
+                        "description": "The reverse DNS network",
+                        "type": "string",
+                        "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(?:[1-2][0-9]|3[0-2])$"
+                    },
+                    "primary_dns_name": {
+                        "name": "Zone primary DNS name",
+                        "description": "Zone primary DNS name",
+                        "$comment": "Not required, TODO",
+                        "type": "string",
+                        "pattern": "^(?:[a-zA-Z0-9-]+\\.?)*[a-z]{2}$"
+                    },
+                    "refresh": {
+                        "name": "The period where secondary DNS must refresh their values",
+                        "description": "The period where secondary DNS must refresh their values",
+                        "type": "integer",
+                        "min": 1
+                    },
+                    "retry": {
+                        "name": "The period where secondary DNS must not retry a failed entry",
+                        "description": "The period where secondary DNS must not retry a failed entry",
+                        "type": "integer",
+                        "min": 1
+                    },
+                    "expire": {
+                        "name": "The period where secondary DNS will stop delivering cached values when primary is not available",
+                        "description": "The period where secondary DNS will stop delivering cached values when primary is not available",
+                        "type": "integer",
+                        "min": 1
+                    },
+                    "negative_cache_ttl": {
+                        "name": "The period where secondary DNS entries expire",
+                        "description": "The period where secondary DNS entries expire",
+                        "type": "integer",
+                        "min": 1
+                    }
+                }
+            }
+        }
+    },
+    "unevaluatedProperties": false,
+    "unevaluatedItems": false
+}

@@ -4,7 +4,6 @@
   file:
     path: "{{ bind_config_dir }}"
     state: directory
-    owner: root
     owner: "{{ bind_group_name }}"
     mode: "{{ play_bind.primary | default(False) | ternary('750', '770') }}"
 

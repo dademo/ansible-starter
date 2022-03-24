@@ -64,6 +64,13 @@
       expire: "{{ play_bind.host_zone.expire | default(play_bind.host_zone.TTL | default(3600)) }}"
       negative_cache_ttl: "{{ play_bind.host_zone.negative_cache_ttl | default((play_bind.host_zone.TTL | default(3600)) / 10) }}"
 
+- name: Checking values
+  ansible.utils.validate:
+    data: "{{ play_bind }}"
+    criteria: "{{ lookup('file', 'bind.schema.json') }}"
+    engine: 'ansible.utils.jsonschema'
+  register: validation_errors
+
 - name: Installing software
   include_tasks: "setup/{{ ansible_facts.os_family | lower }}.yaml"
 

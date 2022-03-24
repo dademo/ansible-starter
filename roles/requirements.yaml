@@ -5,3 +5,5 @@ collections:
     type: galaxy
   - name: ansible.posix
     type: galaxy
+  - name: ansible.utils
+    type: galaxy

@@ -34,5 +34,7 @@ galaxy_info:
   galaxy_tags:
     - system
 
-dependencies: []
+  dependencies:
+    - 'ansible.posix'
+    - 'community.general'
 
