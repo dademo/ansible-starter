@@ -29,15 +29,13 @@
                         "name": "Zone zone",
                         "description": "The zone name",
                         "$comment": "https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/naming-conventions-for-computer-domain-site-ou",
-                        "type": "string",
-                        "pattern": "^(?:[a-zA-Z0-9-]+\\.?)*[a-z]{2}$"
+                        "$ref": "#/$defs/dns_name"
                     },
                     "admin": {
                         "name": "Zone admin",
                         "description": "The zone admin name",
                         "$comment": "https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/naming-conventions-for-computer-domain-site-ou",
-                        "type": "string",
-                        "pattern": "^(?:[a-zA-Z0-9-]+\\.?)*[a-z]{2}$"
+                        "$ref": "#/$defs/dns_name"
                     },
                     "TTL": {
                         "name": "Zone TTL",
@@ -61,7 +59,7 @@
                                     "name": "Zone entry name",
                                     "description": "Zone entry name",
                                     "type": "string",
-                                    "pattern": "^(?:[a-zA-Z0-9-]+\\.?)*[a-z]{2}\\.?$"
+                                    "pattern": "^(?:@|(?:[a-zA-Z0-9-]+\\.?)*[a-z]{2}\\.?)$"
                                 },
                                 "type": {
                                     "name": "Zone entry type",
@@ -69,6 +67,7 @@
                                     "$comment": "https://en.wikipedia.org/wiki/List_of_DNS_record_types",
                                     "type": "string",
                                     "enum": [
+                                        "NS",
                                         "MX",
                                         "A",
                                         "CNAME",
@@ -138,8 +137,7 @@
                         "items": {
                             "name": "Zone allow query source",
                             "description": "An allowed source for this zone",
-                            "type": "string",
-                            "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:/(?:[1-2][0-9]|3[0-2]))?$"
+                            "$ref": "#/$defs/ip_or_network"
                         }
                     },
                     "allow_reverse_query": {
@@ -151,22 +149,18 @@
                         "items": {
                             "name": "Zone allow reverse query source",
                             "description": "An allowed reverse source for this zone",
-                            "type": "string",
-                            "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:/(?:[1-2][0-9]|3[0-2]))?$"
+                            "$ref": "#/$defs/ip_or_network"
                         }
                     },
                     "network": {
                         "name": "Reverse DNS network",
                         "description": "The reverse DNS network",
-                        "type": "string",
-                        "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(?:[1-2][0-9]|3[0-2])$"
+                        "$ref": "#/$defs/network"
                     },
                     "primary_dns_name": {
                         "name": "Zone primary DNS name",
                         "description": "Zone primary DNS name",
-                        "$comment": "Not required, TODO",
-                        "type": "string",
-                        "pattern": "^(?:[a-zA-Z0-9-]+\\.?)*[a-z]{2}$"
+                        "$ref": "#/$defs/dns_name"
                     },
                     "refresh": {
                         "name": "The period where secondary DNS must refresh their values",
@@ -197,5 +191,20 @@
         }
     },
     "unevaluatedProperties": false,
-    "unevaluatedItems": false
+    "unevaluatedItems": false,
+    "$defs": {
+        "dns_name": {
+            "$comment": "https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/naming-conventions-for-computer-domain-site-ou",
+            "type": "string",
+            "pattern": "^(?:[a-zA-Z0-9-]+\\.?)*[a-z]{2}$"
+        },
+        "network": {
+            "type": "string",
+            "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(?:[1-2][0-9]|3[0-2])$"
+        },
+        "ip_or_network": {
+            "type": "string",
+            "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:/(?:[1-2][0-9]|3[0-2]))?$"
+        }
+    }
 }
