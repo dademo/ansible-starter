@@ -69,7 +69,20 @@
     state: enabled
     immediate: yes
     permanent: yes
-  when: "'firewalld' in ansible_facts['services']"
+  when: "'firewalld.service' in ansible_facts['services']"
+
+- name: Adding SELinux rules
+  community.general.sefcontext:
+    target: '{{ nexus_user_home }}/nexus/bin/nexus'
+    setype: bin_t
+    state: present
+    reload: yes
+  when: "ansible_facts.selinux.status == 'enabled'"
+
+- name: Seloading SELinux rules
+  command:
+    cmd: "restorecon -irv {{ nexus_user_home }}"
+  when: "ansible_facts.selinux.status == 'enabled'"
 
 - name: Creating service
   template:

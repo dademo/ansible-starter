@@ -1,0 +1,12 @@
+#!/usr/bin/env ansible-playbook
+
+- name: Installing Nexus
+  hosts: "{{ host_override | default('nexus') }}"
+  gather_facts: no
+  become: yes
+  become_user: root
+  become_method: sudo
+  tags:
+    - nexus
+  roles:
+    - nexus

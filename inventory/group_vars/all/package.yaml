@@ -13,6 +13,7 @@ packages:
     - iftop
     - screen
     - vim
+    - tar
     - firewalld
     - fail2ban
     - cron
@@ -28,6 +29,7 @@ packages:
     - iftop
     - screen
     - vim
+    - tar
     - firewalld
     - fail2ban
     - cron
@@ -43,6 +45,7 @@ packages:
     - iftop
     - screen
     - vim
+    - tar
     - firewalld
     - fail2ban
     - cronie
@@ -58,6 +61,7 @@ packages:
     - iftop
     - screen
     - vim
+    - tar
     - firewalld
     - fail2ban
     - cronie
@@ -73,6 +77,7 @@ packages:
     - iftop
     - screen
     - vim
+    - tar
     - firewalld
     - fail2ban
     - cronie
