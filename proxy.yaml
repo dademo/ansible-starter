@@ -10,3 +10,14 @@
     - keepalived
   roles:
     - keepalived
+
+- name: Adding haproxy
+  hosts: "{{ host_override | default('proxy') }}"
+  gather_facts: yes
+  become: yes
+  become_user: root
+  become_method: sudo
+  tags:
+    - haproxy
+  roles:
+    - haproxy

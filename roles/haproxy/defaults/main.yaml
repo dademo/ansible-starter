@@ -1,2 +1,146 @@
 ---
-# defaults file for haproxy
+# https://cbonte.github.io/haproxy-dconv/1.7/configuration.html
+haproxy_defaults:
+  global:
+    daemon: true
+    # Note: Should be later escaped for HTML
+    description: 'Haproxy'
+    user: haproxy
+    group: haproxy
+    pidfile: /run/haproxy.pid
+    maxconn: 50000
+    nbproc: "{{ (ansible_processor_vcpus | default(ansible_processor_cores | default(1))) / 2 | round(method='ceil') | int }}"
+    node: "{{ ansible_nodename }}"
+    #maxconn:
+    #maxconnrate:
+    #maxcomprate:
+    #maxpipes:
+    #maxsessrate:
+    #maxsslconn:
+    #maxsslconn:
+    #maxsslrate:
+    #maxzlibmem:
+    # https://cbonte.github.io/haproxy-dconv/1.7/configuration.html#log
+    log:
+      - address: /dev/log
+        #length:
+        format: rfc3164
+        facility: local0
+        # any of [ emerg, alert, crit, err, warning, notice, info, debug ]
+        level: info
+    #hard_stop_after:
+
+  defaults:
+    timeout:
+      check: 1s
+      client: 1m
+      connect: 1s
+      http-keep-alive: 1m
+      http-request: 30s
+      queue: 1s
+      server: 1m
+      server-fin: 5s
+      tarpit: 1m
+      tunnel: 1h
+
+  frontends:
+    grafana-ft:
+      # tcp|http|health
+      mode: http
+      bind:
+        - address_port: 0.0.0.0:80
+          ssl: false
+        #- address_port: 0.0.0.0:443
+        #  ssl: true
+        #  crt: /etc/ssl/certs/haproxy.pem
+        #  ssl_min_ver: TLSv1.2
+      timeout: {}
+      # https://cbonte.github.io/haproxy-dconv/1.7/configuration.html#7.1
+      acl:
+        net_services:
+          operation: src
+          value: 172.17.1.0/24
+        grafana_dns:
+          operation: hdr(host)
+          operator: -i
+          value: grafana.services.dev.localdomain
+      tcp_request:
+        connection:
+          - action: reject
+            if:
+              - '!net_services'
+            # unless:
+        #session:
+      redirect:
+        - type: scheme
+          value: https
+          # if:
+          unless:
+            - "!{ ssl_fc }"
+      backends:
+        - name: grafana-bk
+          if:
+            - grafana_dns
+          # unless
+      errorfiles: {}
+      #errorfiles:
+      #  403: /etc/haproxy/403.http
+      default_backend: default-bk
+      options:
+        - forwardfor
+        - httplog
+        - dontlognull
+
+  backends:
+    default-bk:
+      mode: http
+      balance: roundrobin
+      timeout: {}
+      servers:
+        - name: grafana-1
+          address: 172.17.1.80:80
+          check: true
+          ssl: false
+          # ca_file: '...'
+          # maxconn
+      http_check:
+        - connect:
+            #address:
+            port: 80
+            #alpn
+            ssl: false
+          send:
+            method: GET
+            uri: /health
+            headers: {}
+            #body:
+          expect:
+            status: 200
+      options:
+        - httpchk
+    grafana-bk:
+      mode: http
+      balance: roundrobin
+      timeout: {}
+      servers:
+        - name: grafana-1
+          address: 172.17.1.81:8080
+          check: true
+          ssl: false
+          # ca_file: '...'
+          # maxconn
+      http_check:
+        - connect:
+            #address:
+            port: 8080
+            #alpn
+            ssl: false
+          send:
+            method: GET
+            uri: /health
+            headers: {}
+            #body:
+          expect:
+            status: 200
+      options:
+        - httpchk

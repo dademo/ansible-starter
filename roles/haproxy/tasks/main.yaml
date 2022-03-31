@@ -1,2 +1,30 @@
 ---
-# tasks file for haproxy
+- name: Merging variables
+  set_fact:
+    play_haproxy: |-
+      {#-
+      {{
+        haproxy_defaults |
+        combine(haproxy, recursive=True, list_merge='append') |
+        combine(haproxy_host | default({}), recursive=True, list_merge='append')
+      }}
+      -#}
+      {{
+        haproxy_defaults |
+        combine(haproxy, recursive=True) |
+        combine(haproxy_host | default({}), recursive=True)
+      }}
+
+- name: Installing haproxy
+  package:
+    name: haproxy
+    state: present
+
+- name: Configuring haproxy
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    owner: root
+    group: root
+    backup: yes
+    validate: haproxy -c -V -f %s
