@@ -85,11 +85,7 @@ frontend {{ _frontend_name }}
 {% endfor %}
 
 {%  for _acl_name, _acl_def in (_frontend_definition.acl | default({})).items() %}
-  acl {{ _acl_name }}
-{%-   if _acl_def.operation is defined and _acl_def.operation %}
- {{ _acl_def.operation }}
-{%-    endif %}
- {{- ' ' + (_acl_def.value | string) }}
+  acl {{ _acl_name }} {{ _acl_def }}
 {%  endfor %}
 
 {%  for _tcp_request_opt, _tcp_request_action in _frontend_definition.tcp_request.items() %}
@@ -144,8 +140,8 @@ frontend {{ _frontend_name }}
   default_backend {{ _frontend_definition.default_backend }}
 {%  endif %}
 
-{%  for _error_code, _errorfile in _frontend_definition.errorfiles.items() %}
-  errorfile {{ _error_code }} {{ _errorfile }}
+{%  for _errorfile_def in _frontend_definition.errorfiles %}
+  errorfile {{ _errorfile_def.code }} {{ _errorfile_def.file }}
 {%  endfor %}
 
 {%  for _option in _frontend_definition.options %}
