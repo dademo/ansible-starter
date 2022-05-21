@@ -2,9 +2,3 @@
 
 - name: Applying customizations
   import_tasks: 00_customization.yaml
-
-- name: Creating groups and users
-  import_tasks: 01_users.yaml
-
-- name: Creating sudo roles
-  import_tasks: 02_sudo.yaml
