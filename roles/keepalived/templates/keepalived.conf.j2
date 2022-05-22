@@ -67,9 +67,9 @@ vrrp_instance VI_{{ vrrp_instance_name | upper }} {
 
   virtual_ipaddress {
 {%   for vip in vrrp_instance_def.virtual_ipaddresses %}
-{%-   set _address = vip.address | ansible.netcommon.ipaddr('address') %}
-{%-   set _prefix = [vip.address] | ansible.netcommon.ipaddr('host/prefix') | ansible.netcommon.ipaddr('prefix') | difference([32]) | first | default(vip.netmask) %}
-    {{ (_address + '/' + _prefix) | ansible.netcommon.ipaddr('host/prefix') }} dev {{ vip.interface | default(vrrp_instance_def.interface | default(ansible_default_ipv4.interface)) }} scope global
+{%-   set _address = vip.address | ansible.utils.ipaddr('address') %}
+{%-   set _prefix = [vip.address] | ansible.utils.ipaddr('host/prefix') | ansible.utils.ipaddr('prefix') | difference([32]) | first | default(vip.netmask) %}
+    {{ (_address + '/' + _prefix) | ansible.utils.ipaddr('host/prefix') }} dev {{ vip.interface | default(vrrp_instance_def.interface | default(ansible_default_ipv4.interface)) }} scope global
 {%   endfor %}
   }
 

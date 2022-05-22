@@ -67,7 +67,7 @@ defaults
 {% for _frontend_name, _frontend_definition in play_haproxy.frontends.items() %}
 frontend {{ _frontend_name }}
   mode {{ _frontend_definition.mode }}
-
+{# [...] #}
 {#  Bind ports #}
 {%  for _bind_def in _frontend_definition.bind %}
   bind {{ _bind_def.address_port }}
@@ -79,16 +79,16 @@ frontend {{ _frontend_name }}
 {%    endif %}
 
 {%  endfor %}
-
+{# [...] #}
 {% for _timeout_field, _timeout_value in (_frontend_definition.timeout | default({})).items() %}
   timeout {{ _timeout_field }} {{ _timeout_value }}
 {% endfor %}
-
+{# [...] #}
 {%  for _acl_name, _acl_def in (_frontend_definition.acl | default({})).items() %}
   acl {{ _acl_name }} {{ _acl_def }}
 {%  endfor %}
-
-{%  for _tcp_request_opt, _tcp_request_action in _frontend_definition.tcp_request.items() %}
+{# [...] #}
+{%  for _tcp_request_opt, _tcp_request_action in (_frontend_definition.tcp_request | default({})).items() %}
 {%    for _action_def in _tcp_request_action %}
   tcp-request {{ _tcp_request_opt }} {{ _action_def.action }}
 {%-     if _action_def.if is defined %}
@@ -104,8 +104,8 @@ frontend {{ _frontend_name }}
 {%      endif %}
 {%    endfor %}
 {%  endfor %}
-
-{%  for _redirect in _frontend_definition.redirect %}
+{# [...] #}
+{%  for _redirect in _frontend_definition.redirect | default([]) %}
   redirect {{ _redirect.type }} {{ _redirect.value }}
 {%-   if _redirect.if is defined %}
  if
@@ -119,7 +119,7 @@ frontend {{ _frontend_name }}
 {%      endfor %}
 {%    endif %}
 {%  endfor %}
-
+{# [...] #}
 {%    for _backend in _frontend_definition.backends %}
   use_backend {{ _backend.name }}
 {%-     if _backend.if is defined %}
@@ -134,19 +134,20 @@ frontend {{ _frontend_name }}
 {%        endfor %}
 {%      endif %}
 {%    endfor %}
-
+{# [...] #}
 {%  if _frontend_definition.default_backend is defined
   and _frontend_definition.default_backend %}
   default_backend {{ _frontend_definition.default_backend }}
 {%  endif %}
-
-{%  for _errorfile_def in _frontend_definition.errorfiles %}
+{# [...] #}
+{%  for _errorfile_def in _frontend_definition.errorfiles | default([]) %}
   errorfile {{ _errorfile_def.code }} {{ _errorfile_def.file }}
 {%  endfor %}
 
-{%  for _option in _frontend_definition.options %}
+{%  for _option in _frontend_definition.options | default([]) %}
   option {{ _option }}
 {%  endfor %}
+
 {% endfor %}
 
 ##################################################
@@ -156,11 +157,11 @@ frontend {{ _frontend_name }}
 {% for _backend_name, _backend_definition in play_haproxy.backends.items() %}
 backend {{ _backend_name }}
   mode {{ _backend_definition.mode }}
-
+{# [...] #}
 {% for _timeout_field, _timeout_value in (_backend_definition.timeout | default({})).items() %}
   timeout {{ _timeout_field }} {{ _timeout_value }}
 {% endfor %}
-
+{# [...] #}
 {# HTTP checks #}
 {%  for _http_check in _backend_definition.http_check | default([]) %}
 {%    if _http_check.connect is defined %}
@@ -202,22 +203,24 @@ backend {{ _backend_name }}
 {%  endfor %}
 {# Servers #}
 {%  for _server in _backend_definition.servers %}
-  server {{ _server.name }} {{ _server.address }}
+  {%- set _opts = [] %}
   {%- if _server.check | default(True) %}
- check
-  {% endif%}
+    {{- _opts.append('check') -}}
+  {% endif %}
   {%- if _server.maxconn is defined and _server.maxconn %}
- maxconn {{ _server.maxconn }}
-  {% endif%}
+    {{- _opts.append('maxconn ' + _server.maxconn) -}}
+  {% endif %}
   {%- if _server.ssl | default(False) %}
- ssl
-  {% endif%}
+    {{- _opts.append('ssl') -}}
+  {% endif %}
   {%- if _server.ssl | default(False) and _server.ca_file is defined and _server.ca_file %}
- ca-file {{ _server.ca_file }}
-  {% endif%}
+    {{- _opts.append('ca-file ' + _server.ca_file) -}}
+  {% endif %}
+  {#- [...] #}
+  server {{ _server.name }} {{ _server.address }} {{- ' ' + ' '.join(_opts) | trim }}
 {%  endfor %}
-
-{%  for _option in _backend_definition.options %}
+{# [...] #}
+{%  for _option in _backend_definition.options | default([])%}
   option {{ _option }}
 {%  endfor %}
 

@@ -2,18 +2,54 @@
 - name: Merging variables
   set_fact:
     play_haproxy: |-
-      {#-
       {{
         haproxy_defaults |
         combine(haproxy, recursive=True, list_merge='append') |
         combine(haproxy_host | default({}), recursive=True, list_merge='append')
       }}
-      -#}
-      {{
-        haproxy_defaults |
-        combine(haproxy, recursive=True) |
-        combine(haproxy_host | default({}), recursive=True)
-      }}
+
+- name: Copying static resources
+  copy:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    mode: "{{ item.mode | default('644') }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    backup: no
+  loop: |-
+    {%- set _files = [] -%}
+    {%- set _certfiles = play_haproxy.frontends.values()      |
+                          default([])                         |
+                          map(attribute='bind', default=[])   |
+                          selectattr('local_crt', 'defined')  |
+                          unique(attribute='local_crt')
+    -%}
+    {%- set _errorfiles = play_haproxy.frontends.values()       |
+                          default([])                           |
+                          selectattr('errorfiles', 'defined')   |
+                          sum(attribute='errorfiles', start=[]) |
+                          selectattr('local_file', 'defined')   |
+                          unique(attribute='local_file')
+    -%}
+    {%- for _file in _certfiles -%}
+      {{- _files.append({
+        'src': _file.local_crt,
+        'dest': _file.crt,
+        'mode': _file.mode | default('644'),
+        'owner': _file.owner | default('root'),
+        'group': _file.group | default('root'),
+      }) -}}
+    {%- endfor -%}
+    {%- for _file in _errorfiles -%}
+      {{- _files.append({
+        'src': _file.local_file,
+        'dest': _file.file,
+        'mode': _file.mode | default('644'),
+        'owner': _file.owner | default('root'),
+        'group': _file.group | default('root'),
+      }) -}}
+    {%- endfor -%}
+    {{- _files -}}
 
 - name: Installing haproxy
   package:

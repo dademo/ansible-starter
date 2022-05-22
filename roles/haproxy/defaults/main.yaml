@@ -43,161 +43,164 @@ haproxy_defaults:
       tarpit: 1m
       tunnel: 1h
 
-  frontends:
-    grafana-ft:
-      # tcp|http|health
-      mode: http
-      bind:
-        - address_port: 0.0.0.0:80
-          ssl: false
-        #- address_port: 0.0.0.0:443
-        #  ssl: true
-        #  crt: /etc/ssl/certs/haproxy.pem
-        #  local_crt: certs/haproxy.pem
-        #  ssl_min_ver: TLSv1.2
-      timeout: {}
-      # https://cbonte.github.io/haproxy-dconv/1.7/configuration.html#7.1
-      acl:
-        net_services: src 172.17.1.0/24
-        grafana_dns: hdr(host) -i grafana.services.dev.localdomain
-      tcp_request:
-        connection:
-          - action: reject
-            if:
-              - '!net_services'
-            # unless:
-        #session:
-      redirect: []
-      #redirect:
-      #  - type: scheme
-      #    value: https
-      #    # if:
-      #    unless:
-      #      - "!{ ssl_fc }"
-      backends:
-        - name: grafana-bk
-          if:
-            - grafana_dns
-          # unless
-      default_backend: default-bk
-      errorfiles:
-        - code: 403
-          file: /etc/haproxy/errors/403.http
-          local_file: errofiles/403.http
-      options:
-        - forwardfor
-        - httplog
-        - dontlognull
-    rabbitmq-ft:
-      mode: tcp
-      bind:
-        - address_port: 0.0.0.0:5672
-          ssl: false
-      backends:
-        - name: rabbitmq-bk
-          if:
-            - grafana_dns
+  frontends: []
+  # frontends:
+  #   grafana-ft:
+  #     # tcp|http|health
+  #     mode: http
+  #     bind:
+  #       - address_port: 0.0.0.0:80
+  #         ssl: false
+  #       #- address_port: 0.0.0.0:443
+  #       #  ssl: true
+  #       #  crt: /etc/ssl/certs/haproxy.pem
+  #       #  local_crt: certs/haproxy.pem
+  #       #  ssl_min_ver: TLSv1.2
+  #     timeout: {}
+  #     # https://cbonte.github.io/haproxy-dconv/1.7/configuration.html#7.1
+  #     acl:
+  #       net_services: src 172.17.1.0/24
+  #       grafana_dns: hdr(host) -i grafana.services.dev.localdomain
+  #     tcp_request:
+  #       connection:
+  #         - action: reject
+  #           if:
+  #             - '!net_services'
+  #           # unless:
+  #       #session:
+  #     redirect: []
+  #     #redirect:
+  #     #  - type: scheme
+  #     #    value: https
+  #     #    # if:
+  #     #    unless:
+  #     #      - "!{ ssl_fc }"
+  #     backends:
+  #       - name: grafana-bk
+  #         if:
+  #           - grafana_dns
+  #         # unless
+  #     default_backend: default-bk
+  #     errorfiles: []
+  #     #errorfiles:
+  #     #  - code: 403
+  #     #    file: /etc/haproxy/errors/403.http
+  #     #    local_file: errofiles/403.http
+  #     options:
+  #       - forwardfor
+  #       - httplog
+  #       - dontlognull
 
-  backends:
-    default-bk:
-      mode: http
-      balance: roundrobin
-      timeout: {}
-      servers:
-        - name: grafana-1
-          address: 172.17.1.80:80
-          check: true
-          ssl: false
-          # ca_file: '...'
-          # maxconn
-      http_check:
-        - connect:
-            #address:
-            port: 80
-            #alpn
-            ssl: false
-          send:
-            method: GET
-            uri: /health
-            headers: {}
-            #body:
-          expect:
-            status: 200
-      options:
-        - httpchk
-    grafana-bk:
-      mode: http
-      balance: roundrobin
-      timeout: {}
-      servers:
-        - name: grafana-1
-          address: 172.17.1.81:8080
-          check: true
-          ssl: false
-          # local_ca_file: '...'
-          # ca_file: '...'
-          # maxconn: 5
-      http_check:
-        - connect:
-            #address:
-            port: 8080
-            #alpn
-            ssl: false
-          send:
-            method: GET
-            uri: /health
-            headers: {}
-            #body:
-          expect:
-            status: 200
-      options:
-        - httpchk
-    rabbitmq-bk:
-      mode: tcp
-      balance: leastconn
-      timeout: {}
-      servers:
-        - name: rabbitmq-1
-          address: 172.17.1.151:5672
-          check: true
-          ssl: false
-        - name: rabbitmq-2
-          address: 172.17.1.152:5672
-          check: true
-          ssl: false
-        - name: rabbitmq-3
-          address: 172.17.1.153:5672
-          check: true
-          ssl: false
-    rabbitmq-management-bk:
-      mode: http
-      balance: roundrobin
-      timeout: {}
-      servers:
-        - name: rabbitmq-1
-          address: 172.17.1.151:15672
-          check: true
-          ssl: false
-        - name: rabbitmq-2
-          address: 172.17.1.152:15672
-          check: true
-          ssl: false
-        - name: rabbitmq-3
-          address: 172.17.1.153:15672
-          check: true
-          ssl: false
-      http_check:
-        - connect:
-            #address:
-            port: 15672
-            #alpn
-            ssl: false
-          send:
-            method: GET
-            uri: /
-            headers: {}
-            #body:
-          expect:
-            status: 200
-      options:
-        - httpchk
+  #   rabbitmq-ft:
+  #     mode: tcp
+  #     bind:
+  #       - address_port: 0.0.0.0:5672
+  #         ssl: false
+  #     backends:
+  #       - name: rabbitmq-bk
+
+
+  backends: []
+  # backends:
+  #   default-bk:
+  #     mode: http
+  #     balance: roundrobin
+  #     timeout: {}
+  #     servers:
+  #       - name: grafana-1
+  #         address: 172.17.1.80:80
+  #         check: true
+  #         ssl: false
+  #         # ca_file: '...'
+  #         # maxconn
+  #     http_check:
+  #       - connect:
+  #           #address:
+  #           port: 80
+  #           #alpn
+  #           ssl: false
+  #         send:
+  #           method: GET
+  #           uri: /health
+  #           headers: {}
+  #           #body:
+  #         expect:
+  #           status: 200
+  #     options:
+  #       - httpchk
+  #   grafana-bk:
+  #     mode: http
+  #     balance: roundrobin
+  #     timeout: {}
+  #     servers:
+  #       - name: grafana-1
+  #         address: 172.17.1.81:8080
+  #         check: true
+  #         ssl: false
+  #         # local_ca_file: '...'
+  #         # ca_file: '...'
+  #         # maxconn: 5
+  #     http_check:
+  #       - connect:
+  #           #address:
+  #           port: 8080
+  #           #alpn
+  #           ssl: false
+  #         send:
+  #           method: GET
+  #           uri: /health
+  #           headers: {}
+  #           #body:
+  #         expect:
+  #           status: 200
+  #     options:
+  #       - httpchk
+  #   rabbitmq-bk:
+  #     mode: tcp
+  #     balance: leastconn
+  #     timeout: {}
+  #     servers:
+  #       - name: rabbitmq-1
+  #         address: 172.17.1.151:5672
+  #         check: true
+  #         ssl: false
+  #       - name: rabbitmq-2
+  #         address: 172.17.1.152:5672
+  #         check: true
+  #         ssl: false
+  #       - name: rabbitmq-3
+  #         address: 172.17.1.153:5672
+  #         check: true
+  #         ssl: false
+  #   rabbitmq-management-bk:
+  #     mode: http
+  #     balance: roundrobin
+  #     timeout: {}
+  #     servers:
+  #       - name: rabbitmq-1
+  #         address: 172.17.1.151:15672
+  #         check: true
+  #         ssl: false
+  #       - name: rabbitmq-2
+  #         address: 172.17.1.152:15672
+  #         check: true
+  #         ssl: false
+  #       - name: rabbitmq-3
+  #         address: 172.17.1.153:15672
+  #         check: true
+  #         ssl: false
+  #     http_check:
+  #       - connect:
+  #           #address:
+  #           port: 15672
+  #           #alpn
+  #           ssl: false
+  #         send:
+  #           method: GET
+  #           uri: /
+  #           headers: {}
+  #           #body:
+  #         expect:
+  #           status: 200
+  #     options:
+  #       - httpchk
