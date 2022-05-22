@@ -64,3 +64,42 @@
     group: root
     backup: yes
     validate: haproxy -c -V -f %s
+  notify: reload haproxy
+
+- name: Updating service facts
+  service_facts: {}
+
+- name: Configuring firewalld
+  ansible.posix.firewalld:
+    port: '{{ item}}/tcp'
+    state: enabled
+    immediate: yes
+    permanent: yes
+  when: "'firewalld.service' in ansible_facts['services']"
+  loop: |-
+    {%- set _ports = [] -%}
+    {%- for _port in play_haproxy.frontends.values()              |
+                      default([])                                 |
+                      sum(attribute='bind', start=[])             |
+                      map(attribute='address_port', default='0')  |
+                      select                                      |
+                      unique
+    -%}
+    {{- _ports.append(_port.split(':')[1]) -}}
+    {%- endfor -%}
+    {{- _ports -}}
+
+- name: Allowing haproxy to bind any port
+  ansible.posix.seboolean:
+    name: haproxy_connect_any
+    state: yes
+    persistent: yes
+  when: "ansible_facts.selinux.status == 'enabled'"
+
+
+- name: Enabling Haproxy
+  systemd:
+    name: haproxy
+    state: started
+    enabled: yes
+    daemon-reload: yes
