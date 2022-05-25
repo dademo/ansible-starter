@@ -1,0 +1,10 @@
+---
+
+- name: Applying Opensearch Dashboards configuration
+  template:
+    src: opensearch_dashboards.yml.j2
+    dest: /etc/opensearch-dashboards/opensearch_dashboards.yml
+    backup: no
+    owner: opensearch-dashboards
+    group: opensearch-dashboards
+  notify: Restart opensearch-dashboards

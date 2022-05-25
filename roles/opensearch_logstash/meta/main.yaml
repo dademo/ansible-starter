@@ -1,10 +1,9 @@
----
 galaxy_info:
-  role_name: system_base
+  role_name: opensearch_logstash
   author: dademo
-  description: A base role to bootstrap my servers
-  company: null
+  description: A role to install Bind service
   license: Mozilla Public License, version 2.0
+
   min_ansible_version: 2.10
   platforms:
     - name: Fedora
@@ -20,23 +19,23 @@ galaxy_info:
       versions:
         - 8
         - 9
-    - name: Debian
-      versions:
-        - 9
-        - 10
-        - 11
-    - name: Ubuntu
-      versions:
-        - 20.04
-        - 20.10
-        - 21.04
-        - 21.10
-        - 22.04
+    #- name: Debian
+    #  versions:
+    #    - 9
+    #    - 10
+    #    - 11
+    #- name: Ubuntu
+    #  versions:
+    #    - 20.04
+    #    - 20.10
+    #    - 21.04
+    #    - 21.10
+    #    - 22.04
     
   galaxy_tags:
     - system
+    - DNS
 
   dependencies:
+    - 'ansible.utils'
     - 'ansible.posix'
-    - 'community.general'
-

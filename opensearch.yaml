@@ -1,0 +1,77 @@
+#!/usr/bin/env ansible-playbook
+
+- name: Installing Opensearch
+  hosts: "{{ host_override | default('opensearch') }}"
+  gather_facts: yes
+  become: yes
+  become_user: root
+  become_method: sudo
+  roles:
+    - ssh_guard
+    - opensearch
+  vars:
+    play_opensearch: |-
+      {{-
+        opensearch_defaults               |
+        combine(
+          opensearch | default({}),
+          recursive=True,
+          list_merge='append'
+        )                                 |
+        combine(
+          opensearch_host | default({}),
+          recursive=True,
+          list_merge='append'
+        )
+      -}}
+    ssh_check_ports:
+      - '{{ sshd_port | default(None) }}'
+      - 22
+  tags:
+    - opensearch
+
+- name: Installing Opensearch Dashboards
+  hosts: "{{ host_override | default('opensearch_dashboards') }}"
+  gather_facts: yes
+  become: yes
+  become_user: root
+  become_method: sudo
+  roles:
+    - ssh_guard
+    - opensearch_dashboards
+  vars:
+    play_opensearch_dashboards: |-
+      {{-
+        opensearch_dashboards_defaults              |
+        combine(
+          opensearch_dashboards | default({}),
+          recursive=True,
+          list_merge='append'
+        )                                           |
+        combine(
+          opensearch_dashboards_host | default({}),
+          recursive=True,
+          list_merge='append'
+        )
+      -}}
+    ssh_check_ports:
+      - '{{ sshd_port | default(None) }}'
+      - 22
+  tags:
+    - opensearch-dashboards
+
+- name: Installing Opensearch
+  hosts: "{{ host_override | default('opensearch_logstash') }}"
+  gather_facts: yes
+  become: yes
+  become_user: root
+  become_method: sudo
+  roles:
+    - ssh_guard
+    - opensearch_logstash
+  vars:
+    ssh_check_ports:
+      - '{{ sshd_port | default(None) }}'
+      - 22
+  tags:
+    - logstash

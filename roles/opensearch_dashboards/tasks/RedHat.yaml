@@ -1,0 +1,9 @@
+---
+
+- name: Installing Opensearch Dashboards
+  dnf:
+    name: '{{ opensearch_dashboards_url.rpm }}'
+    state: present
+    disable_gpg_check: yes
+    allow_downgrade: yes
+    allowerasing: no

@@ -1,0 +1,9 @@
+---
+
+- name: Installing Opensearch
+  dnf:
+    name: '{{ opensearch_url.rpm }}'
+    state: present
+    disable_gpg_check: yes
+    allow_downgrade: yes
+    allowerasing: no

@@ -1,0 +1,5 @@
+---
+# vars file for opensearch_logstash
+logstash_url:
+  rpm: 'https://artifacts.elastic.co/downloads/logstash/logstash-{{ play_logstash.version }}-x86_64.rpm'
+  deb: 'https://artifacts.elastic.co/downloads/logstash/logstash-{{ play_logstash.version }}-amd64.deb'

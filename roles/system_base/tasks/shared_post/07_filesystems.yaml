@@ -1,0 +1,160 @@
+---
+
+# https://docs.ansible.com/ansible/latest/collections/community/general/parted_module.html
+- name: Creating filesystems partitions
+  community.general.parted:
+    device: '{{ item.device }}'
+    label: '{{ item.label }}'
+    flags: '{{ item.flags }}'
+    fs_type: '{{ item.fs_type }}'
+    part_type: '{{ item.part_type }}'
+    number: '{{ item.number }}'
+    name: '{{ item.name }}'
+    part_start: '{{ item.part_start }}'
+    part_end: '{{ item.part_end }}'
+    unit: '{{ item.unit }}'
+    resize: yes
+    state: present
+  loop: |-
+    {%- set _partitions = [] -%}
+    {%- for _part_def in partitions -%}
+      {%- set _fs_final = {
+          'device': _part_def.device,
+          'label': _part_def.label | default('msdos'),
+          'flags': _part_def.flags | default([]),
+          'fs_type': fs_def.fs_type | default(None),
+          'number': _part_def.number,
+          'name': _part_def.name | default(None),
+          'part_start': _part_def.part_start | default('0%'),
+          'part_end': _part_def.part_end | default('100%'),
+          'unit': _part_def.unit | default('GB'),
+        }
+      -%}
+      {#- Part type -#}
+      {%- if _fs_final.label == 'msdos' -%}
+        {%- set _fs_final = _fs_final | combine({
+            'part_type': _part_def.part_type | default('primary'),
+          })
+        -%}
+      {%- else -%}
+        {%- set _fs_final = _fs_final | combine({
+            'part_type': None,
+          })
+        -%}
+      {%- endif -%}
+      {{- _partitions.append(_fs_final) -}}
+    {%- endfor -%}
+    {{ _partitions }}
+  when: partitions is defined
+
+- name: Creating LVM Volume Groups
+  community.general.lvg:
+    vg: '{{ item.name }}'
+    pvs: '{{ item.pvs }}'
+    pvresize: '{{ item.pvresize | default(True) }}'
+    pv_options: "{{ item.pv_options | default('') }}"
+    vg_options: "{{ item.vg_options | default('') }}"
+    state: present
+    force: yes
+  loop: '{{ lvm.lvg | default([]) }}'
+  when: lvm is defined
+
+- name: Creating LVM Logical Volumes
+  community.general.lvol:
+    vg: '{{ item.vg }}'
+    lv: '{{ item.name }}'
+    size: "{{ item.size | default('100%FREE') }}"
+    resizefs: '{{ item.resizefs | default(True) }}'
+    shrink: '{{ item.shrink | default(False) }}'
+    opts: "{{ item.opts | default('') }}"
+    state: present
+    active: yes
+    force: yes
+  loop: '{{ lvm.lvol | default([]) }}'
+  when: lvm is defined
+
+- name: Gathering mount points
+  setup:
+    gather_subset: hardware
+    filter: ansible_mounts
+
+- name: Creating additional filesystems
+  community.general.filesystem:
+    dev: '{{ item.dev }}'
+    fstype: '{{ item.fstype }}'
+    resizefs: '{{ item.resizefs }}'
+    opts: '{{ item.opts }}'
+    state: present
+    force: yes
+  loop: |-
+    {%- set _filesystems = [] -%}
+    {#- Partitions -#}
+    {%- for _part_def in partitions | selectattr('filesystem', 'defined') -%}
+      {{- _filesystems.append({
+          'dev': _part_def.device + (device.number | string),
+          'fstype': _part_def.filesystem.fstype,
+          'resizefs': _part_def.filesystem.resizefs | default(True),
+          'opts': _part_def.filesystem.opts | default(''),
+        })
+      -}}
+    {%- endfor -%}
+    {#- LVM volumes -#}
+    {%- for _lvol_def in (lvm | default({})).lvol | default([]) | selectattr('filesystem', 'defined') -%}
+      {{- _filesystems.append({
+          'dev': '/dev/mapper/' + (_lvol_def.vg | replace('-', '--')) + '-' + ((_lvol_def.name | replace('-', '--'))),
+          'fstype': _lvol_def.filesystem.fstype,
+          'resizefs': _lvol_def.filesystem.resizefs | default(True),
+          'opts': _lvol_def.filesystem.opts | default(''),
+        })
+      -}}
+    {%- endfor -%}
+    {{ _filesystems }}
+  when:
+    - lvm is defined or partitions is defined
+    # Partition not already mounted (= existing)
+    - not ansible_mounts | selectattr('device', 'eq', item.dev)
+
+- name: Creating fstab entries
+  ansible.posix.mount:
+    src: '{{ item.src }}'
+    path: '{{ item.path }}'
+    fstype: '{{ item.fstype }}'
+    state: mounted
+    boot: '{{ item.boot }}'
+    dump: '{{ item.dump }}'
+    passno: '{{ item.passno }}'
+    opts: '{{ item.opts }}'
+  loop: |-
+    {%- set _fstab_entries = [] -%}
+    {#- Partitions -#}
+    {%- for _part_def in partitions | selectattr('filesystem', 'defined') -%}
+      {%- if _part_def.filesystem.fstab is defined -%}
+        {{- _fstab_entries.append({
+            'src': _part_def.device + (device.number | string),
+            'path': _part_def.filesystem.fstab.path,
+            'fstype': _part_def.filesystem.fstype,
+            'boot': _part_def.filesystem.fstab.boot | default(True),
+            'dump': _part_def.filesystem.fstab.dump | default(0),
+            'passno': _part_def.filesystem.fstab.passno | default(0),
+            'opts': _part_def.filesystem.fstab.opts | default(''),
+          })
+        -}}
+      {%- endif -%}
+    {%- endfor -%}
+    {#- LVM volumes -#}
+    {%- for _lvol_def in (lvm | default({})).lvol | default([]) | selectattr('filesystem', 'defined') -%}
+      {%- if _lvol_def.filesystem.fstab is defined -%}
+        {{- _fstab_entries.append({
+            'src': '/dev/mapper/' + (_lvol_def.vg | replace('-', '--')) + '-' + ((_lvol_def.name | replace('-', '--'))),
+            'path': _lvol_def.filesystem.fstab.path,
+            'fstype': _lvol_def.filesystem.fstype,
+            'boot': _lvol_def.filesystem.fstab.boot | default(True),
+            'dump': _lvol_def.filesystem.fstab.dump | default(0),
+            'passno': _lvol_def.filesystem.fstab.passno | default(0),
+            'opts': _lvol_def.filesystem.fstab.opts | default(''),
+          })
+        -}}
+      {%- endif -%}
+    {%- endfor -%}
+    {{ _fstab_entries }}
+  when: lvm is defined or partitions is defined

@@ -1,0 +1,4 @@
+---
+# defaults file for opensearch
+opensearch_defaults:
+  version: '1.3.2'

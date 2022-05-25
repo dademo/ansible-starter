@@ -1,0 +1,4 @@
+---
+# defaults file for opensearch_dashboards
+opensearch_dashboards_defaults:
+  version: '1.3.2'

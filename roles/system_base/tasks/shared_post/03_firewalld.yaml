@@ -10,3 +10,21 @@
     enabled: yes
   when: "'firewalld.service' in ansible_facts['services']"
 
+- name: Adding custom firewalld rules (services)
+  ansible.posix.firewalld:
+    service: '{{ item }}'
+    permanent: yes
+    immediate: yes
+    state: enabled
+  when: "'firewalld.service' in ansible_facts['services']"
+  loop: '{{ firewall.services | default([]) }}'
+
+- name: Adding custom firewalld rules (ports)
+  ansible.posix.firewalld:
+    port: '{{ item }}'
+    permanent: yes
+    immediate: yes
+    state: enabled
+  when: "'firewalld.service' in ansible_facts['services']"
+  loop: '{{ firewall.ports | default([]) }}'
+

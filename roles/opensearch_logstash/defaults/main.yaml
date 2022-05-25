@@ -1,0 +1,4 @@
+---
+# defaults file for opensearch_logstash
+logstash_defaults:
+  version: '8.2.1'

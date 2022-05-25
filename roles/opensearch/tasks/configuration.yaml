@@ -1,0 +1,112 @@
+---
+
+- name: Applying JVM configuration
+  template:
+    src: jvm.options.j2
+    dest: /etc/opensearch/jvm.options
+    backup: no
+    owner: opensearch
+    group: opensearch
+  notify: Restart opensearch
+
+- name: Applying Opensearch configuration
+  template:
+    src: opensearch.yml.j2
+    dest: /etc/opensearch/opensearch.yml
+    backup: no
+    owner: opensearch
+    group: opensearch
+  notify: Restart opensearch
+
+- name: Applying RCA configuration
+  copy:
+    content: '{{ play_opensearch.rca_enabled | default(True) | string | lower }}'
+    dest: /etc/opensearch/rca_enabled.conf
+    owner: opensearch
+    group: opensearch
+  notify: Restart opensearch
+
+- name: Applying Performance Analyzer configuration
+  copy:
+    content: '{{ play_opensearch.performance_analyzer_enabled | default(True) | string | lower }}'
+    dest: /etc/opensearch/performance_analyzer_enabled.conf
+    owner: opensearch
+    group: opensearch
+  notify: Restart opensearch
+
+- name: Applying sysctl values
+  sysctl:
+    name: '{{ item.name }}'
+    value: '{{ item.value }}'
+    sysctl_set: yes
+    reload: yes
+    state: present
+  loop:
+    - name: 'vm.max_map_count'
+      value: 262144
+  notify: Restart opensearch
+
+- name: Updating Systemd configurations (1/3)
+  file:
+    path: /etc/systemd/system/opensearch.service.d
+    state: directory
+    owner: root
+    group: root
+
+- name: Updating Systemd configurations (2/3)
+  template:
+    src: opensearch_service_override.ini.j2
+    dest: /etc/systemd/system/opensearch.service.d/override.conf
+    backup: no
+    owner: root
+    group: root
+
+- name: Reloading systemd configuration (3/3)
+  systemd:
+    daemon_reload: yes
+  notify: Restart opensearch
+
+- name: Applying security configurations
+  community.general.pam_limits:
+    domain: 'opensearch'
+    limit_item: '{{ item.item }}'
+    limit_type: '{{ item.type }}'
+    value: '{{ item.value }}'
+    backup: no
+  loop:
+    - item: nofile
+      type: soft
+      value: 65536
+    - item: nofile
+      type: hard
+      value: 65536
+    - item: memlock
+      type: soft
+      value: unlimited
+    - item: memlock
+      type: hard
+      value: unlimited
+  notify: Restart opensearch
+
+- name: Listing installed plugins
+  command:
+    argv:
+      - bash
+      - bin/opensearch-plugin
+      - list
+    chdir: '{{ opensearch_home_dir }}'
+  register: opensearch_plugins_list
+  changed_when: False
+
+- name: Installing plugins
+  command:
+    argv:
+      - bash
+      - bin/opensearch-plugin
+      - install
+      - '{{ item }}'
+    chdir: '{{ opensearch_home_dir }}'
+  loop: '{{ play_opensearch.plugins }}'
+  when: item not in opensearch_plugins_list.stdout_lines
+
+

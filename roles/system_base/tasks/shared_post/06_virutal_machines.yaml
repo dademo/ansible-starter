@@ -3,6 +3,13 @@
 - name: Updating service facts
   service_facts: {}
 
+- name: Creating the script directory
+  file:
+    path: /opt/scripts
+    state: directory
+    owner: root
+    group: root
+
 - name: Configuring virtual machines specifics | Adding a memory purge cron
   block:
     - name: Configuring virtual machines specifics | Adding a memory purge cron | Adding script

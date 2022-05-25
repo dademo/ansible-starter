@@ -1,0 +1,8 @@
+---
+# handlers file for opensearch_dashboards
+
+- name: Restart opensearch-dashboards
+  systemd:
+    name: opensearch-dashboards
+    state: restarted
+  throttle: 1

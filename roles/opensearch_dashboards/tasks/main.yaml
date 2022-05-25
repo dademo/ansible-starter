@@ -1,0 +1,15 @@
+---
+# tasks file for opensearch_dashboards
+
+- name: Running platform-specific setup
+  include_tasks: "{{ ansible_facts.os_family }}.yaml"
+
+- name: Configuring the service
+  import_tasks: "configuration.yaml"
+
+- name: Starting the service
+  systemd:
+    name: opensearch-dashboards
+    state: started
+    enabled: yes
+    daemon_reload: yes

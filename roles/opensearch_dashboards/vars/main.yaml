@@ -1,0 +1,4 @@
+---
+# vars file for opensearch_dashboards
+opensearch_dashboards_url:
+  rpm: 'https://artifacts.opensearch.org/releases/bundle/opensearch-dashboards/{{ play_opensearch_dashboards.version }}/opensearch-dashboards-{{ play_opensearch_dashboards.version }}-linux-x64.rpm'

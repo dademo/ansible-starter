@@ -1,0 +1,7 @@
+---
+# vars file for opensearch
+opensearch_url:
+  rpm: 'https://artifacts.opensearch.org/releases/bundle/opensearch/{{ play_opensearch.version }}/opensearch-{{ play_opensearch.version }}-linux-x64.rpm'
+
+opensearch_home_dir: /usr/share/opensearch
+
