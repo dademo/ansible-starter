@@ -1,0 +1,26 @@
+{#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
+#
+# These groups are read by MariaDB command-line tools
+# Use it for options that affect only one utility
+#
+
+[mysql]
+port    = {{ play_galera.port }}
+socket  = {{ play_galera.socket }}
+
+[mysql_upgrade]
+
+[mysqladmin]
+
+[mysqlbinlog]
+
+[mysqlcheck]
+
+[mysqldump]
+
+[mysqlimport]
+
+[mysqlshow]
+
+[mysqlslap]
+

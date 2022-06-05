@@ -1,0 +1,21 @@
+{#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
+
+{%- macro wsrep_cluster_address(wsrep_cluster_addresses, wsrep_cluster_addresses_options={}) -%}
+{%- set _formatted_wsrep_cluster_addresses_options = [] -%}
+{%- for _option_key, _option_value in wsrep_cluster_addresses_options.items() -%}
+{#-     For options without values -#}
+{%-     if _option_value -%}
+{{-         _formatted_wsrep_cluster_addresses_options.append('%s=%s' | format(_option_key, _option_value)) -}}
+{%-     else -%}
+{{-         _formatted_wsrep_cluster_addresses_options.append(_option_key) -}}
+{%-     endif -%}
+{%- endfor -%}
+gcomm://{{- wsrep_cluster_addresses | join(',') -}}
+{#- Options management -#}
+{{- (_formatted_wsrep_cluster_addresses_options | length > 0) |
+    ternary(
+        '?%s' | format(_formatted_wsrep_cluster_addresses_options | join(',')),
+        ''
+    )
+-}}
+{%- endmacro -%}

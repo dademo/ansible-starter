@@ -1,0 +1,25 @@
+---
+# Copy /etc/skel/.*rc files
+# Requires user_name variable
+
+- name: Configuring users and groups | User creation | Copying /etc/skel/.*rc to user homes | Listing files
+  find:
+    paths: "/etc/skel"
+    patterns: ".*rc"
+    file_type: file
+    hidden: yes
+    follow: no
+    recurse: yes
+    get_checksum: no
+  register: dot_rc_files
+
+- name: Configuring users and groups | User creation | Copying /etc/skel/.*rc to user homes | Copying files
+  copy:
+    src: '{{ item }}'
+    dest: '/home/{{ user_name }}/{{ item }}'
+    owner: '{{ user_name }}'
+    group: '{{ user_name }}'
+    remote_src: yes
+    force: yes
+    backup: no
+  loop: "{{ dot_rc_files.files | map(attribute='path') }}"

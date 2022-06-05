@@ -1,0 +1,10 @@
+---
+# handlers file for galera
+- name: restart mariadb
+  systemd:
+    name: mariadb
+    state: restarted
+  throttle: 1
+  when:
+    - galera_cluster_initialized
+    - not (force_galera_new_cluster | default(False))

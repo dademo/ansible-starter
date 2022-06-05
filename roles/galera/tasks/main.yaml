@@ -1,0 +1,200 @@
+---
+# tasks file for galera
+
+- name: Checking if the host have already been configured
+  stat:
+    path: '{{ galera_file_cluster_initialized }}'
+    follow: no
+    get_attributes: no
+    get_checksum: no
+    get_mime: no
+  register: _galera_node_initialized
+
+- name: Sharing configuration state to the Ansible fact cache
+  set_fact:
+    cacheable: yes
+    galera_node_initialized: _galera_node_initialized.stat.exists
+    mariadb_version: |-
+      {%- if play_galera.mariadb_version is defined -%}
+        {%- if ansible_facts.os_family == 'Debian' -%}
+        {{- play_galera.mariadb_version   |
+            regex_search('^(?:>|<|=)=') |
+            ternary(
+              play_galera.mariadb_version,
+              "==%s" | format(play_galera.mariadb_version)
+            )
+        -}}
+        {%- else -%}
+        {{- play_galera.mariadb_version   |
+            regex_search('^=') |
+            ternary(
+              play_galera.mariadb_version,
+              "=%s" | format(play_galera.mariadb_version)
+            )
+        -}}
+        {%- endif -%}
+      {%- endif -%}
+    galera_version: |-
+      {%- if play_galera.galera_version is defined -%}
+        {%- if ansible_facts.os_family == 'Debian' -%}
+        {{- play_galera.galera_version   |
+            regex_search('^(?:>|<|=)=') |
+            ternary(
+              play_galera.galera_version,
+              "==%s" | format(play_galera.galera_version)
+            )
+        -}}
+        {%- else -%}
+        {{- play_galera.galera_version   |
+            regex_search('^=') |
+            ternary(
+              play_galera.galera_version,
+              "=%s" | format(play_galera.galera_version)
+            )
+        -}}
+        {%- endif -%}
+      {%- endif -%}
+
+- name: Setting botstrap values
+  set_fact:
+    galera_cluster_initialized: |-
+      {%- set _host_initialied = [] -%}
+      {%- for _host in ansible_play_hosts -%}
+        {{- _host_initialied.append(hostvars[_host]['ansible_facts']['galera_node_initialized']) -}}
+      {%- endfor -%}
+      {{- (_host_initialied | select | length) == (ansible_play_hosts | length) -}}
+
+- name: Installing Mariadb (Debian)
+  apt:
+    name: |-
+      {%- set play_packages = [] -%}
+      {%- for _package in packages.mariadb[ansible_facts.os_family] -%}
+      {{- play_packages.append(_package + mariadb_version) -}}
+      {%- endfor -%}
+      {%- for _package in packages.galera[ansible_facts.os_family] -%}
+      {{- play_packages.append(_package + galera_version) -}}
+      {%- endfor -%}
+      {{- play_packages -}}
+    state: present
+    update_cache: yes
+    allow_downgrade: no
+  when: ansible_facts.os_family == 'Debian'
+
+- name: Installing Mariadb (RHEL)
+  dnf:
+    name: |-
+      {%- set play_packages = [] -%}
+      {%- for _package in packages.mariadb[ansible_facts.os_family] -%}
+      {{- play_packages.append(_package + mariadb_version) -}}
+      {%- endfor -%}
+      {%- for _package in packages.galera[ansible_facts.os_family] -%}
+      {{- play_packages.append(_package + galera_version) -}}
+      {%- endfor -%}
+      {%- for _package in packages.others[ansible_facts.os_family] -%}
+      {{- play_packages.append(_package) -}}
+      {%- endfor -%}
+      {{- play_packages -}}
+    state: present
+    update_cache: yes
+    allow_downgrade: no
+  when: ansible_facts.os_family == 'RedHat'
+
+- name: Looking for configuration files in the role
+  find:
+    paths: "{{ role_path }}/templates/{{ ansible_facts.os_family }}"
+    file_type: file
+    follow: no
+    recurse: yes
+    get_checksum: no
+  delegate_to: localhost
+  become: false
+  register: mariadb_template_files
+
+- name: Configuring mariadb on hosts
+  template:
+    src: "{{ item }}"
+    dest: |-
+      {{
+        '%s/%s' | format(
+          configuration_directory[ansible_facts.os_family],
+          item | replace(ansible_facts.os_family + '/', '') | replace('.j2', '')
+        )
+      }}
+    owner: mysql
+    group: mysql
+  loop: |-
+    {%- set _template_file_names = [] -%}
+    {%- for _file in mariadb_template_files.files |
+              map(attribute='path')
+    -%}
+      {{- _template_file_names.append(_file | replace('%s/templates/' | format(role_path), '')) -}}
+    {%- endfor -%}
+    {{- _template_file_names -}}
+  notify: restart mariadb
+
+- name: Creating directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: mysql
+    group: mysql
+    recurse: no
+  loop:
+    - "{{ play_galera.datadir }}"
+    - "{{ play_galera.pid_file | dirname }}"
+    - "{{ play_galera.socket | dirname }}"
+
+- name: Bootstraping cluster
+  command:
+    cmd: galera_new_cluster
+  when:
+    - inventory_hostname == (ansible_play_hosts | first)
+    - (not galera_cluster_initialized) or (force_galera_new_cluster | default(False))
+
+- name: Marking host as configured
+  file:
+    path: '{{ galera_file_cluster_initialized }}'
+    state: touch
+    owner: root
+    group: root
+
+- name: Starting services
+  systemd:
+    name: mariadb
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Flushing handlers
+  meta: flush_handlers
+
+- name: Creating databases
+  community.mysql.mysql_db:
+    name: "{{ play_galera.databases }}"
+    state: present
+    login_unix_socket: "{{ play_galera.socket }}"
+  # Only on a single host
+  when: inventory_hostname == (ansible_play_hosts | first)
+
+- name: Creating users
+  community.mysql.mysql_user:
+    name: "{{ item.name }}"
+    host: "{{ item.host }}"
+    password: "{{ item.password }}"
+    encrypted: no
+    state: present
+    sql_log_bin: yes
+    update_password: always
+    priv: |-
+      {%- set _grants = {} -%}
+      {%- for _grant_definition in item.grants -%}
+      {%- set _grants = _grants.update({
+          _grant_definition.target: _grant_definition.grants | default(['ALL']) | join(',')
+        })
+      -%}
+      {%- endfor -%}
+      {{- _grants -}}
+    login_unix_socket: "{{ play_galera.socket }}"
+  loop: "{{ play_galera.users }}"
+  # Only on a single host
+  when: inventory_hostname == (ansible_play_hosts | first)

@@ -1,0 +1,29 @@
+---
+# defaults file for galera
+galera_defaults:
+  bind_address: '0.0.0.0'
+  port: 3306
+  datadir: /var/lib/mysql
+  pid_file: /run/mariadb/mariadb.pid
+  socket: /var/run/mysqld/mysqld.sock
+  tmpdir: /tmp
+
+  wsrep_cluster_name: galera
+  wsrep_node_name: ''
+  wsrep_node_address: '{{ ansible_default_ipv4.address }}:4567'
+  wsrep_node_incoming_address: '{{ ansible_default_ipv4.address }}:3306'
+  wsrep_cluster_addresses_override: []
+  wsrep_cluster_addresses_options: {}
+  wsrep_slave_threads: 1
+  wsrep_retry_autocommit: 1
+
+  databases: []
+  users:
+    - name: root
+      host: '%'
+      # Should be encrypted
+      password: root
+      grants:
+        - target: '*.*'
+          grants:
+            - ALL

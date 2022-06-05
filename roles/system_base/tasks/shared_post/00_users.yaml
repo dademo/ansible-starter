@@ -42,6 +42,7 @@
         get_mime: no
       register: pubkey_stat
       loop: '{{ created_users.results }}'
+
     - name: Configuring users and groups | Saving SSH keys | Checking for private key existance
       stat:
         path: "{{ item.ssh_key_file | default(item.home + '/.ssh/id_rsa', True) }}"
@@ -71,6 +72,30 @@
       when: item.stat.exists
   when: inventory_hostname == ansible_play_hosts_all[0]
 
+- name: Configuring users and groups | User creation | Other hosts
+  user:
+    name: '{{ item.name }}'
+    groups: '{{ item.groups | default([]) }}'
+    system: '{% if item.system | default(False) %}yes{% else %}no{% endif %}'
+    comment: '{{ item.comment | default(None) }}'
+    shell: "{{ item.shell | default('/usr/bin/zsh') }}"
+    ssh_key_file: >-
+      {% if item.generate_ssh_key | default(False) %}
+        resources/{{ item.name }}/id_rsa
+      {% else %}
+        null
+      {% endif %}
+    generate_ssh_key: no
+    password_lock: yes
+    state: present
+    create_home: yes
+    skeleton: /etc/skel
+    append: no
+    force: no
+    non_unique: no
+  loop: '{{ default_users + authentication.users }}'
+  register: created_users
+  when: inventory_hostname != ansible_play_hosts_all[0]
 
 - name: Configuring users and groups | User creation | Other hosts
   user:
@@ -107,6 +132,12 @@
     - ubuntu
     - centos
     - admin
+
+- name: Configuring users and groups | User creation | Copying /etc/skel/.*rc to user homes
+  include_tasks: include/user_copy_rc_files.yaml
+  loop: "{{ (default_users + authentication.users) | exclude('eq', 'root') }}"
+  loop_control:
+    loop_var: user_name
 
 - name: Configuring users and groups | Disabling root direct login
   user:

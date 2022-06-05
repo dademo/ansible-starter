@@ -1,0 +1,31 @@
+#!/usr/bin/env ansible-playbook
+
+- name: Installing a Galera cluster
+  hosts: "{{ host_override | default('galera') }}"
+  gather_facts: yes
+  become: yes
+  become_user: root
+  become_method: sudo
+  roles:
+    #- ssh_guard
+    - galera
+  vars:
+    play_galera: |-
+      {{-
+        galera_defaults               |
+        combine(
+          galera | default({}),
+          recursive=True,
+          list_merge='append'
+        )                             |
+        combine(
+          galera_host | default({}),
+          recursive=True,
+          list_merge='append'
+        )
+      -}}
+    ssh_check_ports:
+      - '{{ sshd_port | default(None) }}'
+      - 22
+  tags:
+    - galera

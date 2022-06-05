@@ -5,6 +5,7 @@
     path: "{{ bind_config_dir }}"
     state: directory
     owner: "{{ bind_group_name }}"
+    group: "{{ bind_group_name }}"
     mode: "{{ play_bind.primary | default(False) | ternary('750', '770') }}"
 
 - name: Listing existing files

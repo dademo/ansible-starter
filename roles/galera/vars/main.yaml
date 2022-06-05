@@ -1,0 +1,41 @@
+---
+# vars file for galera
+
+configuration_directory:
+  Debian: /etc/mysql/mariadb.conf.d
+  RedHat: /etc/my.cnf.d
+
+galera_file_cluster_initialized: "{{ configuration_directory[ansible_facts.os_family] }}/.ansible_cluster_initialized"
+
+packages:
+  mariadb:
+    Debian:
+      - mariadb-server
+      - mariadb-common
+      - mariadb-plugin-spider
+    RedHat:
+      - mariadb
+      - mariadb-backup
+      - mariadb-server-utils
+      - mariadb-server-galera
+  galera:
+    Debian:
+      - galera-4
+    RedHat:
+      - galera
+  others:
+    Debian:
+      - python3-pymysql
+    RedHat:
+      - python3-PyMySQL
+
+wsrep_cluster_addresses: |-
+  {%- set _wsrep_cluster_addresses = [] -%}
+  {%- if (play_galera.wsrep_cluster_addresses_override | length) > 0 -%}
+  {{- _wsrep_cluster_addresses.extend(play_galera.wsrep_cluster_addresses_override) -}}
+  {%- else -%}
+  {%- for _ansible_host in ansible_play_hosts -%}
+  {{- _wsrep_cluster_addresses.append('%s:%d' |format(_ansible_host, 4567)) -}}
+  {%- endfor -%}
+  {%- endif -%}
+  {{ _wsrep_cluster_addresses }}

@@ -11,7 +11,7 @@
 
 - name: Enabling firewall
   include_tasks: 03_firewalld.yaml
-  when: firewalld_enabled | default(True) and False
+  when: firewalld_enabled | default(True)
 
 - name: Configuring fail2ban
   import_tasks: 04_fail2ban.yaml
