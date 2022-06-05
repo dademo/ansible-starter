@@ -39,6 +39,4 @@ galaxy_info:
     - galera
 
   dependencies:
-    - 'ansible.utils'
-    - 'ansible.posix'
     - 'community.mysql'
