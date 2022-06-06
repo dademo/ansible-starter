@@ -8,3 +8,6 @@
 
 - name: Configuring access
   include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/03_service_operations.yaml"
+
+- name: Installing repmgr
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/04_repmgr.yaml"

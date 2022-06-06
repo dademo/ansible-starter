@@ -16,6 +16,8 @@
         group: root
         mode: '644'
 
-- name: Reloading Systemd
+- name: Reloading Systemd and enabling service
   systemd:
+    name: "{{ play_instance_service_name }}"
+    enabled: yes
     daemon_reload: yes

@@ -5,5 +5,5 @@ postgresql_defaults:
     {%- if ansible_facts.os_family == 'Debian' -%}
     /var/lib/postgresql
     {%- else -%}
-    /var/lib/pgsql/data
+    /var/lib/pgsql
     {%- endif -%}

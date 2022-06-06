@@ -3,7 +3,7 @@
 - name: Installing PostgreSQL
   apt:
     name: "{{ play_postgresql.packages.postgresql[ansible_facts.os_family] }}"
-    state: latest # We want updates
+    state: present
     update_cache: yes
     disable_gpg_check: false
     validate_certs: yes
@@ -19,18 +19,25 @@
     - name: Getting postgresql executables path | Setting facts (1/2)
       set_fact:
         play_postgresql_version: |-
-          {{
-            play_postgresql.force_version |
+          {{-
+            play_postgresql.force_version                                           |
             default(
-              ansible_facts.packages[play_postgresql.packages.postgresql[ansible_facts.os_family]]  |
-              sort(attribute='version', reverse=True)                                               |
-              first                                                                                 |
-              regex_replace('^[0-9]+\..*$', '\\1')
-          }}
+              ansible_facts.packages[packages.postgresql[ansible_facts.os_family]]  |
+              map(attribute='version')                                              |
+              sort(reverse=True)                                                    |
+              first                                                                 |
+              regex_replace('^([0-9]+)\..*$', '\1')
+            )
+          -}}
     - name: Getting postgresql executables path | Setting facts (2/2)
       set_fact:
         postgresql_pg_ctl_executable: "/usr/lib/postgresql/{{- play_postgresql_version -}}/bin/pg_ctl"
         postgresql_initdb_executable: "/usr/lib/postgresql/{{- play_postgresql_version -}}/bin/initdb"
+
+- name: Installing Repmgr
+  apt:
+    name: "postgresql-{{ play_postgresql_version }}-repmgr"
+    state: present
 
 - name: Cleaning auto-generated PostgreSQL
   block:

@@ -3,17 +3,41 @@
 - name: Installing PostgreSQL
   dnf:
     name: "{{ packages.postgresql[ansible_facts.os_family] }}"
-    state: latest # We want security updates
-    security: yes
+    state: present
     update_cache: yes
     disable_gpg_check: false
     validate_certs: yes
   throttle: 1
 
 - name: Getting postgresql executables path
-  set_fact:
-    postgresql_pg_ctl_executable: /usr/bin/pg_ctl
-    postgresql_initdb_executable: /usr/bin/initdb
+  block:
+    - name: Getting postgresql executables path | Getting installed packages
+      package_facts:
+        manager: auto
+        strategy: first
+    - name: Getting postgresql executables path | Setting facts (1/2)
+      set_fact:
+        play_postgresql_version: |-
+          {{-
+            play_postgresql.force_version                                           |
+            default(
+              ansible_facts.packages[packages.postgresql[ansible_facts.os_family]]  |
+              map(attribute='version')                                              |
+              sort(reverse=True)                                                    |
+              first                                                                 |
+              regex_replace('^([0-9]+)\..*$', '\1')
+            )
+          -}}
+    - name: Getting postgresql executables path | Setting facts (2/2)
+      set_fact:
+        postgresql_pg_ctl_executable: /usr/pgsql-{{ play_postgresql_version }}/bin/pg_ctl
+        postgresql_initdb_executable: /usr/pgsql-{{ play_postgresql_version }}/bin/initdb
+        postgresql_repmgr_executable: /usr/pgsql-{{ play_postgresql_version }}/bin/repmgr
+
+- name: Installing Repmgr
+  dnf:
+    name: "repmgr_{{ play_postgresql_version }}"
+    state: present
 
 - name: Configuring Systemd global services
   template:
@@ -37,3 +61,8 @@
   loop: "{{ play_postgresql.instances }}"
   loop_control:
     loop_var: loop_postgresql_instance_definition
+
+- name: Enabling global PostgreSQL service
+  systemd:
+    name: postgresql
+    enabled: yes

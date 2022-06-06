@@ -21,13 +21,13 @@
 
 - name: Setting values (3/4)
   set_fact:
-    play_instance_pgdata_dir_fullpath: "{{- play_postgresql.pgdata_base -}}/{{- play_instance_pgdata_dir -}}"
+    play_instance_pgdata_dir_fullpath: "{{- play_postgresql.pgdata_base -}}/{{ play_postgresql_version }}/{{- play_instance_pgdata_dir -}}"
 
 - name: Setting values (4/4)
   set_fact:
     play_software_role: |-
       {{-
-        play_postgresql_instance_definition.role                                                                        |
+        play_postgresql_instance_definition.role                                                    |
         default(inventory_hostname == (ansible_play_hosts | first) | ternary('primary',' replica')) |
         lower
       -}}

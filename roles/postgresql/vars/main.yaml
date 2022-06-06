@@ -1,6 +1,15 @@
 ---
 # vars file for postgresql
 
+postgresql_rhel_server_default_release: 14
+
+postgresql_ignore_files:
+  - postgresql.conf
+
+postgresql_configuration_files:
+  - pg_hba.conf
+  - pg_ident.conf
+
 packages:
   repo_deb:
     Debian: "deb http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
@@ -24,18 +33,11 @@ packages:
       {%- if play_postgresql.force_version is defined -%}
         postgresql{{ play_postgresql.force_version }}-server
       {%- else -%}
-        postgresql-server
+        postgresql{{ postgresql_rhel_server_default_release }}-server
       {%- endif -%}
 
 play_software: "{{ play_postgresql.type | default('postgresql') | lower }}"
 play_instance_pgdata_installation_lock_file_name: '.ansible_postgresql_installed'
-
-postgresql_ignore_files:
-  - postgresql.conf
-
-postgresql_configuration_files:
-  - pg_hba.conf
-  - pg_ident.conf
 
 postgresql_external_pid_file: |-
   {{
@@ -59,6 +61,7 @@ postgresql_instance_default:
   tcp_keepalives_interval: 0
   tcp_keepalives_count: 0
   tcp_user_timeout: 0
+  client_connection_check_interval: 0
   authentication_timeout_seconds: 60
   password_encryption: scram-sha-256
   db_user_namespace: false
@@ -67,6 +70,7 @@ postgresql_instance_default:
   # fr_FR.UTF-8
   text_search_configuration: 'pg_catalog.english'
   # pg_catalog.french
+  datestyle: 'iso, mdy'
   timezone: UTC
   # Europe/Paris
   #log_timezone:

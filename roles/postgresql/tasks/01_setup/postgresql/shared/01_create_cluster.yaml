@@ -9,7 +9,9 @@
     state: directory
     owner: postgres
     group: postgres
-    mode: '750'
+    mode: '700'
+    # Parent directories too if required
+    recurse: yes
 
 - name: Checking PostgreSQL directory state
   find:
@@ -101,7 +103,7 @@
       file:
         name: "{{- item -}}"
         state: directory
-        mode: '750'
+        mode: '700'
         owner: postgres
         group: postgres
       loop:
