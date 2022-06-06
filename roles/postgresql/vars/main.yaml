@@ -70,3 +70,7 @@ postgresql_instance_default:
   timezone: UTC
   # Europe/Paris
   #log_timezone:
+  databases: []
+  users: []
+  privileges: []
+

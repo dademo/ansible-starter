@@ -1,0 +1,53 @@
+---
+# Create PostgreSQL databases and users
+
+- name: Installing requirements (Debian)
+  apt:
+    name: python3-psycopg2
+    state: present
+  when: ansible_facts.os_family == 'Debian'
+- name: Installing requirements (RedHat)
+  dnf:
+    name: python3-psycopg2
+    state: present
+  when: ansible_facts.os_family == 'RedHat'
+
+- name: Creating databases
+  become_user: postgres
+  community.postgresql.postgresql_db:
+    name: "{{ item.name }}"
+    login_unix_socket: "{{ play_postgresql_instance_definition.unix_socket_directories | first }}"
+    state: present
+  loop: "{{ play_postgresql_instance_definition.databases }}"
+
+- name: Creating users
+  become_user: postgres
+  community.postgresql.postgresql_user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    db: "{{ item.database | default('postgres') }}"
+    login_unix_socket: "{{ play_postgresql_instance_definition.unix_socket_directories | first }}"
+    state: present
+    encrypted: yes
+  loop: "{{ play_postgresql_instance_definition.users }}"
+
+- name: Updating users roles
+  become_user: postgres
+  community.postgresql.postgresql_privs:
+    database: "postgres"
+    roles: "{{ item.role | default(['PUBLIC']) | join(',') }}"
+    privs: "{{ item.privileges | default(['ALL']) | join(',') }}"
+    type: "{{ item.type | default('database') }}"
+    objs: |-
+      {{
+        item.objs |
+        default(
+          ((item.type | default('database')) in ['function', 'partition table']) |
+          ternary(['ALL_IN_SCHEMA'], [])
+        ) |
+        join(',')
+      }}
+    grant_option: "{{ item.grant_option | default(False) }}"
+    login_unix_socket: "{{ play_postgresql_instance_definition.unix_socket_directories | first }}"
+    state: present
+  loop: "{{ play_postgresql_instance_definition.privileges }}"

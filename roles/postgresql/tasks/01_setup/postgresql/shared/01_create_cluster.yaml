@@ -9,7 +9,7 @@
     state: directory
     owner: postgres
     group: postgres
-    mode: '640'
+    mode: '750'
 
 - name: Checking PostgreSQL directory state
   find:
@@ -105,7 +105,6 @@
         owner: postgres
         group: postgres
       loop:
-        - "{{- play_instance_pgdata_dir_fullpath -}}"
         - "{{- play_instance_pgdata_dir_fullpath -}}/database"
         - "{{- play_instance_pgdata_dir_fullpath -}}/configuration"
 

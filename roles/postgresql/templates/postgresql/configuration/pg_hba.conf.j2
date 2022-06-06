@@ -92,3 +92,41 @@ host    all             all             ::1/128                 ident
 local   replication     all                                     peer
 host    replication     all             127.0.0.1/32            ident
 host    replication     all             ::1/128                 ident
+
+# Ansible entries
+{% set hba_entries = [] %}
+{% for hba_entry in play_postgresql_instance_definition.hba_entries | default([]) %}
+{{
+    hba_entries.append({
+        'type': hba_entry.type | default('host'),
+        'database': hba_entry.database | default('all'),
+        'user': hba_entry.user | default('all'),
+        'address': hba_entry.address | default('0.0.0.0/0'),
+        'method': hba_entry.method | default('scram-sha-256'),
+    })
+}}
+{% endfor %}
+{% for user_entry in play_postgresql_instance_definition.users %}
+{% for hba_entry in user_entry.pg_hba | default([]) %}
+{{
+    hba_entries.append({
+        'type': hba_entry.type | default('host'),
+        'database': hba_entry.database | default('all'),
+        'user': user_entry.name,
+        'address': hba_entry.address | default('0.0.0.0/0'),
+        'method': hba_entry.method | default('scram-sha-256'),
+    })
+}}
+{% endfor %}
+{% endfor %}
+{% for hba_entry in hba_entries %}
+{{
+    "%-07s %-15s %-15s %-23s %s" | format(
+        hba_entry.type,
+        hba_entry.database,
+        hba_entry.user,
+        hba_entry.address,
+        hba_entry.method,
+    )
+}}
+{% endfor %}

@@ -5,3 +5,6 @@
 
 - name: Configuring instance
   include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/02_configure_cluster.yaml"
+
+- name: Configuring access
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/03_service_operations.yaml"
