@@ -75,9 +75,10 @@
       {{- play_packages.append(_package + galera_version) -}}
       {%- endfor -%}
       {{- play_packages -}}
-    state: present
+    state: latest
     update_cache: yes
     allow_downgrade: no
+  throttle: 1
   when: ansible_facts.os_family == 'Debian'
 
 - name: Installing Mariadb (RHEL)
@@ -94,9 +95,10 @@
       {{- play_packages.append(_package) -}}
       {%- endfor -%}
       {{- play_packages -}}
-    state: present
+    state: latest
     update_cache: yes
     allow_downgrade: no
+  throttle: 1
   when: ansible_facts.os_family == 'RedHat'
 
 - name: Looking for configuration files in the role
