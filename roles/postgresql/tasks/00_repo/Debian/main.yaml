@@ -1,0 +1,14 @@
+---
+
+- name: Importing DEB GPG key
+  apt_key:
+    url: "{{ play_postgresql.packages.gpg_deb }}"
+    state: present
+    validate_certs: yes
+
+- name: Adding PostgreSQL repository
+  dnf:
+    name: "{{ play_postgresql.packages.repo_deb[ansible_facts.distribution] }}"
+    state: present
+    disable_gpg_check: false
+    validate_certs: yes

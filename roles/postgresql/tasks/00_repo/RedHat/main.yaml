@@ -1,0 +1,14 @@
+---
+
+- name: Importing YUM GPG key
+  rpm_key:
+    key: "{{ packages.gpg_rpm }}"
+    state: present
+    validate_certs: yes
+
+- name: Adding PostgreSQL repository
+  dnf:
+    name: "{{ packages.repo_rpm[ansible_facts.distribution] }}"
+    state: present
+    disable_gpg_check: false
+    validate_certs: yes

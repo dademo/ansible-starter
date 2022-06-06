@@ -1,0 +1,7 @@
+---
+
+- name: Creating instance
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/01_create_cluster.yaml"
+
+- name: Configuring instance
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/02_configure_cluster.yaml"

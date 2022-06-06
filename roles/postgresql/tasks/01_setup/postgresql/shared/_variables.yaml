@@ -1,0 +1,41 @@
+---
+
+# Common shared variables
+
+- name: Setting values (1/4)
+  set_fact:
+    play_postgresql_instance_definition: |-
+      {{
+        postgresql_instance_default |
+        combine(
+          loop_postgresql_instance_definition,
+          recursive=True,
+          list_merge='append',
+        )
+      }}
+
+- name: Setting values (2/4)
+  set_fact:
+    play_instance_identifier: "{{ play_postgresql_instance_definition.name | default('main') }}"
+    play_instance_pgdata_dir: "{{ play_postgresql_instance_definition.name | default('main') }}"
+
+- name: Setting values (3/4)
+  set_fact:
+    play_instance_pgdata_dir_fullpath: "{{- play_postgresql.pgdata_base -}}/{{- play_instance_pgdata_dir -}}"
+
+- name: Setting values (4/4)
+  set_fact:
+    play_software_role: |-
+      {{-
+        play_postgresql_instance_definition.role                                                                        |
+        default(inventory_hostname == (ansible_play_hosts | first) | ternary('primary',' replica')) |
+        lower
+      -}}
+    play_instance_name: |-
+      {%- if play_postgresql_instance_definition.force_version is defined -%}
+        {{ play_postgresql_instance_definition.force_version -}}-{{- play_instance_identifier -}}
+      {%- else -%}
+        {{- play_instance_identifier -}}
+      {%- endif -%}
+    play_instance_pgdata_dir_fullpath_installation_lock_file: "{{- play_instance_pgdata_dir_fullpath -}}/{{ play_instance_pgdata_installation_lock_file_name }}"
+    play_instance_service_name: "postgresql@{{- play_instance_identifier -}}.service"

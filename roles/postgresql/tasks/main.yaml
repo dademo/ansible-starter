@@ -1,0 +1,15 @@
+---
+# tasks file for postgresql
+
+- name: Checking for required values
+  assert:
+    that:
+      - play_postgresql.instances is defined
+      - play_postgresql.instances is iterable and play_postgresql.instances is not string and play_postgresql.instances is not mapping
+    fail_msg: You must define `postgresql.instances` value and it must be an array of PostgreSQL definitions
+
+- name: Adding PostgreSQL repo
+  include_tasks: "00_repo/{{ ansible_facts.os_family }}/main.yaml"
+
+- name: Installing and configuring software
+  include_tasks: "{{ role_path }}/tasks/01_setup/main.yaml"

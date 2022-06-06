@@ -1,0 +1,39 @@
+---
+
+- name: Installing PostgreSQL
+  dnf:
+    name: "{{ packages.postgresql[ansible_facts.os_family] }}"
+    state: latest # We want security updates
+    security: yes
+    update_cache: yes
+    disable_gpg_check: false
+    validate_certs: yes
+  throttle: 1
+
+- name: Getting postgresql executables path
+  set_fact:
+    postgresql_pg_ctl_executable: /usr/bin/pg_ctl
+    postgresql_initdb_executable: /usr/bin/initdb
+
+- name: Configuring Systemd global services
+  template:
+    src: "postgresql/{{ item }}.j2"
+    dest: /etc/systemd/system/{{ item }}
+    owner: root
+    group: root
+    mode: '644'
+  loop:
+    - postgresql.service
+    - postgresql@.service
+  register: postgresql_global_services_config
+
+- name: Reloading Systemd configuration
+  systemd:
+    daemon_reload: yes
+  when: postgresql_global_services_config.changed
+
+- name: Creating instances and configuring instances
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/00_cluster_tasks.yaml"
+  loop: "{{ play_postgresql.instances }}"
+  loop_control:
+    loop_var: loop_postgresql_instance_definition

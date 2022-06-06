@@ -1,0 +1,9 @@
+---
+
+- name: Installing and configuring PostgreSQL
+  include_tasks: "postgresql/{{ ansible_facts.os_family }}/main.yaml"
+  when: play_software == 'postgresql'
+
+- name: Installing and configuring Barman
+  include_tasks: "barman/{{ ansible_facts.os_family }}/main.yaml"
+  when: play_software == 'barman'

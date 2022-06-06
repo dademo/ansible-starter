@@ -1,0 +1,11 @@
+{#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
+[Unit]
+Description=PostgreSQL Cluster %i
+AssertPathExists={{- play_instance_pgdata_dir_fullpath }}
+
+[Service]
+Environment=PGDATA={{- play_instance_pgdata_dir_fullpath }}
+PIDFile={{- postgresql_external_pid_file }}
+
+[Install]
+WantedBy=multi-user.target

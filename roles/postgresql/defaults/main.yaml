@@ -1,0 +1,9 @@
+---
+# defaults file for postgresql
+postgresql_defaults:
+  pgdata_base: |-
+    {%- if ansible_facts.os_family == 'Debian' -%}
+    /var/lib/postgresql
+    {%- else -%}
+    /var/lib/pgsql/data
+    {%- endif -%}

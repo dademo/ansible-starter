@@ -1,0 +1,40 @@
+---
+
+# Set of tasks to remove the default PostgreSQL instance
+- name: Stopping all PostgreSQL services
+  systemd:
+    name: postgresql
+    state: stopped
+
+- name: Removing existing Systemd services
+  block:
+    - name: Finding existing postgresql services
+      find:
+        paths: /etc/systemd/system/multi-user.target.wants
+        patterns: "postgresql*"
+        recurse: yes
+      register: postgresql_system_services
+    - name: Removing systemd Postgresql services
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop: postgresql_system_services.files | map(attribute='path')
+
+- name: Reloading Systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Removing existing PostgreSQL files
+  block:
+    - name: Removing existing PostgreSQL files | Looking for files
+      find:
+        paths: "{{ play_postgresql.pgdata_base }}"
+        # In case of a mount point
+        excludes: "lost+found"
+        recurse: no
+      register: postgresql_data_files
+    - name: Removing existing PostgreSQL files | Removing existing files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop: postgresql_data_files.files | map(attribute='path')

@@ -1,0 +1,13 @@
+{#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
+# Overriding default /usr/lib/systemd/system/postgresql@.service
+[Unit]
+Description=PostgreSQL RDBMS
+
+[Service]
+Type=oneshot
+ExecStart=/bin/true
+ExecReload=/bin/true
+RemainAfterExit=on
+
+[Install]
+WantedBy=multi-user.target

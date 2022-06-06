@@ -1,0 +1,35 @@
+{#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
+# Overriding default /usr/lib/systemd/system/postgresql@.service
+[Unit]
+Description=PostgreSQL Cluster %i
+After=network.target
+
+[Service]
+Type=forking
+
+User=postgres
+Group=postgres
+
+# Where to send early-startup messages from the server (before the logging
+# options of postgresql.conf take effect)
+# This is normally controlled by the global default set by systemd
+# StandardOutput=syslog
+
+# Disable OOM kill on the postmaster
+OOMScoreAdjust=-1000
+# ... but allow it still to be effective for child processes
+# (note that these settings are ignored by Postgres releases before 9.5)
+Environment=PG_OOM_ADJUST_FILE=/proc/self/oom_score_adj
+Environment=PG_OOM_ADJUST_VALUE=0
+
+# Even though the $PGDATA variable is exported (postmaster would accept that)
+# use the -D option here so PGDATA content is printed by /bin/ps and by
+# 'systemctl status'.
+ExecStart=-{{- postgresql_pg_ctl_executable }} start
+TimeoutStartSec=0
+ExecReload=-{{- postgresql_pg_ctl_executable }} reload
+ExecStop=-{{- postgresql_pg_ctl_executable }} stop
+TimeoutStopSec=1h
+
+[Install]
+WantedBy=multi-user.target

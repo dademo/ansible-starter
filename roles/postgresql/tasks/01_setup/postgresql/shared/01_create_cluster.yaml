@@ -1,0 +1,132 @@
+---
+
+- name: Loading shared variables
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/_variables.yaml"
+
+- name: Creating PostgreSQL instance directory
+  file:
+    path: "{{- play_instance_pgdata_dir_fullpath -}}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '640'
+
+- name: Checking PostgreSQL directory state
+  find:
+    paths: "{{- play_instance_pgdata_dir_fullpath -}}"
+    file_type: any
+    hidden: yes
+    recurse: no
+  register: postgresql_directory_files
+
+- name: Workaround for missing variable in loop
+  set_fact:
+    has_existing_postgresql_files: "{{ postgresql_directory_files.matched > 0 }}"
+
+- name: Pgdata directory is not empty
+  debug:
+    msg: |-
+      Pgdata directory ({{- play_instance_pgdata_dir_fullpath -}}) is not empty.
+      Please clean it or set the `postgresql_clean_pgdata` variable to `true` to force a cluster reset.
+  when:
+    - has_existing_postgresql_files
+    - not (postgresql_clean_pgdata | default(False))
+
+- name: Installing PostgreSQL
+  when:
+    - (not has_existing_postgresql_files) or (postgresql_clean_pgdata | default(False))
+  block:
+    - name: We ensure the process has stopped
+      systemd:
+        name: "{{ play_instance_service_name }}"
+        state: stopped
+      ignore_errors: yes
+
+    - name: Cleaning the directory
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop: "{{ postgresql_directory_files.files | map(attribute='path') }}"
+      when:
+        - postgresql_directory_files.matched > 0
+        - postgresql_clean_pgdata | default(False)
+
+    - name: We ensure the locale is present (Debian)
+      block:
+        - name: We ensure the locale is present (Debian) | Ensure package is present
+          apt:
+            name: locales
+            state: present
+        - name: We ensure the locale is present (Debian) | We ensure the locale is present 
+          community.general.locale_gen:
+            name: "{{ play_postgresql_instance_definition.locale }}"
+            state: present
+      when: ansible_facts.os_family == 'Debian'
+
+    - name: We ensure the locale is present (RedHat)
+      dnf:
+        name: "langpacks-{{ play_postgresql_instance_definition.locale | regex_replace('^([a-zA-Z]+)_.*$', '\\1') }}"
+        state: present
+      when: ansible_facts.os_family == 'RedHat'
+
+    - name: Creating PostgreSQL database cluster
+      become_user: postgres
+      command:
+        argv:
+          - "{{ postgresql_initdb_executable }}"
+          - "--pgdata={{- play_instance_pgdata_dir_fullpath -}}"
+          - "--encoding={{- play_postgresql_instance_definition.encoding -}}"
+          - "--locale={{- play_postgresql_instance_definition.locale -}}"
+          - "--lc-collate={{- play_postgresql_instance_definition.locale -}}"
+          - "--lc-ctype={{- play_postgresql_instance_definition.locale -}}"
+          - "--lc-messages={{- play_postgresql_instance_definition.locale -}}"
+          - "--lc-monetary={{- play_postgresql_instance_definition.locale -}}"
+          - "--lc-numeric={{- play_postgresql_instance_definition.locale -}}"
+          - "--lc-time={{- play_postgresql_instance_definition.locale -}}"
+          - "--text-search-config={{- play_postgresql_instance_definition.text_search_configuration | regex_replace('^[^\\.]+\\.(.+)$', '\\1') -}}"
+      environment:
+        TZ: "{{- play_postgresql_instance_definition.timezone -}}"
+      vars:
+        _locale: "{{- play_postgresql_instance_definition.locale | regex_replace('^([^\\.]+)\\..*$', '\\1') -}}"
+
+    - name: Listing created files
+      find:
+        paths: "{{- play_instance_pgdata_dir_fullpath -}}"
+        file_type: any
+        hidden: yes
+        recurse: no
+      register: postgresql_directory_files
+
+    - name: Creating folders
+      file:
+        name: "{{- item -}}"
+        state: directory
+        mode: '750'
+        owner: postgres
+        group: postgres
+      loop:
+        - "{{- play_instance_pgdata_dir_fullpath -}}"
+        - "{{- play_instance_pgdata_dir_fullpath -}}/database"
+        - "{{- play_instance_pgdata_dir_fullpath -}}/configuration"
+
+    - name: Reorganizing created database files
+      command:
+        cmd: "mv -v {{ item }} database/{{ item }}"
+        chdir: "{{- play_instance_pgdata_dir_fullpath -}}"
+      loop: |-
+        {%- set _files = [] -%}
+        {%- for _file in postgresql_directory_files.files | map(attribute='path') -%}
+        {%- if (_file | basename) not in postgresql_configuration_files and (_file | basename) not in postgresql_ignore_files -%}
+        {{- _files.append(_file | basename) -}}
+        {%- endif -%}
+        {%- endfor -%}
+        {{- _files -}}
+
+    - name: Reorganizing created configuration files
+      command:
+        cmd: "mv -v {{ item }} configuration/{{ item }}"
+        chdir: "{{- play_instance_pgdata_dir_fullpath -}}"
+      loop: "{{ postgresql_configuration_files }}"
+
+    - name: Setting up Systemd configuration
+      include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/01_1_systemd_configure.yaml"

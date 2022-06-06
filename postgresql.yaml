@@ -1,0 +1,31 @@
+#!/usr/bin/env ansible-playbook
+
+- name: Installing a PostgreSQL primary and replications
+  hosts: "{{ host_override | default('postgresql') }}"
+  gather_facts: yes
+  become: yes
+  become_user: root
+  become_method: sudo
+  roles:
+    - ssh_guard
+    - postgresql
+  vars:
+    play_postgresql: |-
+      {{-
+        postgresql_defaults               |
+        combine(
+          postgresql | default({}),
+          recursive=True,
+          list_merge='append'
+        )                                 |
+        combine(
+          postgresql_host | default({}),
+          recursive=True,
+          list_merge='append'
+        )
+      -}}
+    ssh_check_ports:
+      - '{{ sshd_port | default(None) }}'
+      - 22
+  tags:
+    - postgresql

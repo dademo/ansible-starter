@@ -1,0 +1,54 @@
+---
+
+- name: Installing PostgreSQL
+  apt:
+    name: "{{ play_postgresql.packages.postgresql[ansible_facts.os_family] }}"
+    state: latest # We want updates
+    update_cache: yes
+    disable_gpg_check: false
+    validate_certs: yes
+  register: postgresql_installation
+  throttle: 1
+
+- name: Getting postgresql executables path
+  block:
+    - name: Getting postgresql executables path | Getting installed packages
+      package_facts:
+        manager: auto
+        strategy: first
+    - name: Getting postgresql executables path | Setting facts (1/2)
+      set_fact:
+        play_postgresql_version: |-
+          {{
+            play_postgresql.force_version |
+            default(
+              ansible_facts.packages[play_postgresql.packages.postgresql[ansible_facts.os_family]]  |
+              sort(attribute='version', reverse=True)                                               |
+              first                                                                                 |
+              regex_replace('^[0-9]+\..*$', '\\1')
+          }}
+    - name: Getting postgresql executables path | Setting facts (2/2)
+      set_fact:
+        postgresql_pg_ctl_executable: "/usr/lib/postgresql/{{- play_postgresql_version -}}/bin/pg_ctl"
+        postgresql_initdb_executable: "/usr/lib/postgresql/{{- play_postgresql_version -}}/bin/initdb"
+
+- name: Cleaning auto-generated PostgreSQL
+  block:
+    - name: Checking for an old installation
+      include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/installation_check.yaml"
+      vars:
+        play_instance_pgdata_dir_fullpath_installation_lock_file: "/var/lib/postgresql/{{ play_postgresql_version }}/main/{{ .play_instance_pgdata_installation_lock_file_name }}"
+      # Auto-generated PostgreSQL instance
+    - name: Cleaning auto-generated PostgreSQL instance
+      include_tasks: "{{ role_path }}/tasks/01_setup/Debian/default_cleanup.yaml"
+      when: not ansible_managed_installation_exists
+    - name: Registering for PostgreSQL cleanup
+      set_fact:
+        postgresql_clean_pgdata: "{{ postgresql_clean_pgdata | default(not ansible_managed_installation_exists) }}"
+  when: postgresql_installation.changed
+
+- name: Creating instances and configuring instances
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/00_cluster_tasks.yaml"
+  loop: "{{ play_postgresql.instances }}"
+  loop_control:
+    loop_var: loop_postgresql_instance_definition
