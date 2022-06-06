@@ -1,9 +1,22 @@
 {#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
-[ssh]
+[sshd]
 enabled  = true
 port     = {{ sshd_port }}
 
-[selinux-ssh]
+# "bantime" is the number of seconds that a host is banned.
+bantime  = 10m
 
+# A host is banned if it has generated "maxretry" during the last "findtime"
+# seconds.
+findtime  = 10m
+
+# "maxretry" is the number of failures before a host get banned.
+maxretry = 2
+
+# "maxmatches" is the number of matches stored in ticket (resolvable via tag <matches> in actions).
+maxmatches = %(maxretry)s
+
+
+[selinux-ssh]
 port     = {{ sshd_port }}
 

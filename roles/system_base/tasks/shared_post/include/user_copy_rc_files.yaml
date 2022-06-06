@@ -16,7 +16,7 @@
 - name: Configuring users and groups | User creation | Copying /etc/skel/.*rc to user homes | Copying files
   copy:
     src: '{{ item }}'
-    dest: '/home/{{ user_name }}/{{ item }}'
+    dest: '/home/{{ user_name }}/{{ item | basename }}'
     owner: '{{ user_name }}'
     group: '{{ user_name }}'
     remote_src: yes

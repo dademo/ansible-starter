@@ -135,7 +135,7 @@
 
 - name: Configuring users and groups | User creation | Copying /etc/skel/.*rc to user homes
   include_tasks: include/user_copy_rc_files.yaml
-  loop: "{{ (default_users + authentication.users) | exclude('eq', 'root') }}"
+  loop: "{{ (default_users + authentication.users) | map(attribute='name') | reject('eq', 'root') }}"
   loop_control:
     loop_var: user_name
 
