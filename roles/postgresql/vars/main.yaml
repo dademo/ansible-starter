@@ -49,6 +49,10 @@ postgresql_external_pid_file: |-
   }}
 
 postgresql_instance_default:
+  replication:
+    enabled: False
+    connect_timeout: 2
+    # interface_address:
   listen_addresses: 0.0.0.0
   port: 5432
   max_connections: 100
@@ -77,4 +81,97 @@ postgresql_instance_default:
   databases: []
   users: []
   privileges: []
+
+postgresql_repmgr:
+  hba_entries: |-
+    {%- set _hba_entries = [] -%}
+    {#- Static entries -#}
+    {{- _hba_entries.append({
+        'type': 'local',
+        'database': 'replication',
+        'user': 'repmgr',
+        'address': '',
+        'method': 'trust'
+      })
+    -}}
+    {{- _hba_entries.append({
+        'type': 'host',
+        'database': 'replication',
+        'user': 'repmgr',
+        'address': '127.0.0.1/32',
+        'method': 'trust'
+      })
+    -}}
+    {{- _hba_entries.append({
+        'type': 'local',
+        'database': 'repmgr',
+        'user': 'repmgr',
+        'address': '',
+        'method': 'trust'
+      })
+    -}}
+    {{- _hba_entries.append({
+        'type': 'host',
+        'database': 'repmgr',
+        'user': 'repmgr',
+        'address': '127.0.0.1/32',
+        'method': 'trust'
+      })
+    -}}
+    {#- Host entries -#}
+    {%- for _host_name in ansible_play_hosts_all %}
+    {%- set _loop_hostvars_postgresql_merged_values = 
+      hostvars[_host_name]['postgresql'] | default({}) |
+      combine(hostvars[_host_name]['postgresql_host'] | default({}), recursive=True, list_merge='append')
+    -%}
+    {%- set _host_address =
+          (
+            _loop_hostvars_postgresql_merged_values.replication.interface_address     |
+            default(hostvars[_host_name]['ansible_facts']['default_ipv4']['address'])
+          ) + '/' + (
+            _loop_hostvars_postgresql_merged_values.replication.interface_address |
+            default('0.0.0.0/32')                                                 |
+            ansible.utils.ipaddr('prefix')                                        |
+            string
+          )
+    -%}
+    {%- if _loop_hostvars_postgresql_merged_values.type | default('postgresql') == 'postgresql' -%}
+    {{- _hba_entries.append({
+        'type': 'host',
+        'database': 'replication',
+        'user': 'repmgr',
+        'address': _host_address,
+        'method': 'trust'
+      })
+    -}}
+    {{- _hba_entries.append({
+        'type': 'host',
+        'database': 'repmgr',
+        'user': 'repmgr',
+        'address': _host_address,
+        'method': 'trust'
+      })
+    -}}
+    {%- else -%}
+    {{- _hba_entries.append({
+        'type': 'host',
+        'database': 'replication',
+        'user': 'replication',
+        'address': _host_address,
+        'method': 'trust'
+      })
+    -}}
+    {%- endif -%}
+    {%- endfor -%}
+    {{- _hba_entries -}}
+  db_def:
+    - name: repmgr
+  user_def:
+    - name: repmgr
+      password: null
+      database: repmgr
+      role_attr_flags:
+        - CREATEDB
+        - CREATEROLE
+        - SUPERUSER
 

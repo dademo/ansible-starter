@@ -5,8 +5,8 @@
   assert:
     that:
       - play_postgresql.instances is defined
-      - play_postgresql.instances is iterable and play_postgresql.instances is not string and play_postgresql.instances is not mapping
-    fail_msg: You must define `postgresql.instances` value and it must be an array of PostgreSQL definitions
+      - play_postgresql.instances is mapping
+    fail_msg: You must define `postgresql.instances` value and it must be dictionnary of PostgreSQL instances definitions
 
 - name: Adding PostgreSQL repo
   include_tasks: "00_repo/{{ ansible_facts.os_family }}/main.yaml"

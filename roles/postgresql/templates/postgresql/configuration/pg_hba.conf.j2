@@ -81,22 +81,15 @@
 
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
 
-# "local" is for Unix domain socket connections only
-local   all             all                                     peer
-# IPv4 local connections:
-host    all             all             127.0.0.1/32            ident
-# IPv6 local connections:
-host    all             all             ::1/128                 ident
-# Allow replication connections from localhost, by a user with the
-# replication privilege.
-local   replication     all                                     peer
-host    replication     all             127.0.0.1/32            ident
-host    replication     all             ::1/128                 ident
-
 # Ansible entries
 {% set hba_entries = [] %}
+{{- hba_entries.extend(
+        play_postgresql_instance_definition.replication.enabled |
+        ternary(postgresql_repmgr.hba_entries, [])
+    )
+-}}
 {% for hba_entry in play_postgresql_instance_definition.hba_entries | default([]) %}
-{{
+{{-
     hba_entries.append({
         'type': hba_entry.type | default('host'),
         'database': hba_entry.database | default('all'),
@@ -104,11 +97,11 @@ host    replication     all             ::1/128                 ident
         'address': hba_entry.address | default('0.0.0.0/0'),
         'method': hba_entry.method | default('scram-sha-256'),
     })
-}}
+-}}
 {% endfor %}
 {% for user_entry in play_postgresql_instance_definition.users %}
 {% for hba_entry in user_entry.pg_hba | default([]) %}
-{{
+{{-
     hba_entries.append({
         'type': hba_entry.type | default('host'),
         'database': hba_entry.database | default('all'),
@@ -116,7 +109,7 @@ host    replication     all             ::1/128                 ident
         'address': hba_entry.address | default('0.0.0.0/0'),
         'method': hba_entry.method | default('scram-sha-256'),
     })
-}}
+-}}
 {% endfor %}
 {% endfor %}
 {% for hba_entry in hba_entries %}
@@ -130,3 +123,15 @@ host    replication     all             ::1/128                 ident
     )
 }}
 {% endfor %}
+
+# "local" is for Unix domain socket connections only
+local   all             all                                     peer
+# IPv4 local connections:
+host    all             all             127.0.0.1/32            ident
+# IPv6 local connections:
+host    all             all             ::1/128                 ident
+# Allow replication connections from localhost, by a user with the
+# replication privilege.
+local   replication     all                                     peer
+host    replication     all             127.0.0.1/32            ident
+host    replication     all             ::1/128                 ident

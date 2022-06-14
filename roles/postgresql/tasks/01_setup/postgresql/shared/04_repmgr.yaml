@@ -1,3 +1,44 @@
 ---
 
-# Installing repmgr tool
+# Configuring repmgr tool
+
+- name: Loading shared variables
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/_variables.yaml"
+
+- name: Ensure repmgr configuration directory exists
+  file:
+    path: "{{- play_instance_repmgr_dir_fullpath -}}"
+    state: directory
+    owner: root
+    group: root
+    mode: '755'
+    # Parent directories too if required
+    recurse: yes
+
+- name: Applying repmgr configuration
+  template:
+    src: postgresql/configuration/repmgr.conf.j2
+    dest: "{{ play_instance_repmgr_configuration_fullpath }}"
+    owner: root
+    group: root
+
+- name: Checking if the host is already registered
+  become_user: postgres
+  command:
+    argv:
+      - sh
+      - -c
+      - "{{ postgresql_repmgr_executable }} -f '{{ play_instance_repmgr_configuration_fullpath }}' cluster show | grep -e '{{ inventory_hostname | escape | truncate(63, True) }}'"
+  register: play_instance_repmgr_registered_check
+  ignore_errors: yes
+
+- name: Registering node
+  become_user: postgres
+  command:
+    argv:
+      - "{{ postgresql_repmgr_executable }}"
+      - -f
+      - "{{ play_instance_repmgr_configuration_fullpath }}"
+      - "{{ play_is_primary | ternary('primary', 'standby') }}"
+      - register
+  when: play_instance_repmgr_registered_check.rc != 0

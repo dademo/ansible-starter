@@ -8,7 +8,7 @@
       {{
         postgresql_instance_default |
         combine(
-          loop_postgresql_instance_definition,
+          play_postgresql.instances[loop_postgresql_instance_definition_name],
           recursive=True,
           list_merge='append',
         )
@@ -16,19 +16,20 @@
 
 - name: Setting values (2/4)
   set_fact:
-    play_instance_identifier: "{{ play_postgresql_instance_definition.name | default('main') }}"
-    play_instance_pgdata_dir: "{{ play_postgresql_instance_definition.name | default('main') }}"
+    play_instance_identifier: "{{ loop_postgresql_instance_definition_name | replace('/', '-') | replace(':', '-') }}"
+    play_instance_pgdata_dir: "{{ loop_postgresql_instance_definition_name | replace('/', '-') | replace(':', '-') }}"
 
 - name: Setting values (3/4)
   set_fact:
     play_instance_pgdata_dir_fullpath: "{{- play_postgresql.pgdata_base -}}/{{ play_postgresql_version }}/{{- play_instance_pgdata_dir -}}"
+    play_instance_repmgr_dir_fullpath: "/etc/repmgr/{{ play_postgresql_version }}/{{- play_instance_pgdata_dir -}}"
 
 - name: Setting values (4/4)
   set_fact:
-    play_software_role: |-
+    play_is_primary: |-
       {{-
-        play_postgresql_instance_definition.role                                                    |
-        default(inventory_hostname == (ansible_play_hosts | first) | ternary('primary',' replica')) |
+        play_postgresql_instance_definition.is_primary              |
+        default(inventory_hostname == (ansible_play_hosts | first)) |
         lower
       -}}
     play_instance_name: |-
@@ -39,3 +40,5 @@
       {%- endif -%}
     play_instance_pgdata_dir_fullpath_installation_lock_file: "{{- play_instance_pgdata_dir_fullpath -}}/{{ play_instance_pgdata_installation_lock_file_name }}"
     play_instance_service_name: "postgresql@{{- play_instance_identifier -}}.service"
+    play_instance_repmgr_service_name: "postgresql-repmgr@{{- play_instance_identifier -}}.service"
+    play_instance_repmgr_configuration_fullpath: "{{ play_instance_repmgr_dir_fullpath }}/repmgr.conf" 
