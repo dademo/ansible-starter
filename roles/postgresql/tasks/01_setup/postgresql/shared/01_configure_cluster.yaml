@@ -1,0 +1,23 @@
+---
+
+# Configure a PostgreSQL cluster instance
+
+- name: Configuring primary PostgreSQL
+  when: play_is_primary
+  block:
+  - name: Configuring primary PostgreSQL | Loading shared variables
+    include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/helpers/variables.yaml"
+
+  - name: Configuring primary PostgreSQL | Configuring PostgreSQL
+    include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/helpers/postgresql_configure.yaml"
+
+  - name: Configuring primary PostgreSQL | Restarting PostgreSQL in case of a change
+    systemd:
+      name: "{{ play_instance_service_name }}"
+      state: restarted
+    when: play_postgresql_instance_configuration_changed
+
+  - name: Configuring primary PostgreSQL | Waiting for PostgreSQL to be started
+    wait_for:
+      host: localhost
+      port: "{{ play_postgresql_instance_definition.port }}"

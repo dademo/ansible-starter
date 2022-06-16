@@ -36,6 +36,8 @@
       set_fact:
         postgresql_pg_ctl_executable: "{{ play_postgresql_bindir }}/pg_ctl"
         postgresql_initdb_executable: "{{ play_postgresql_bindir }}/initdb"
+        postgresql_repmgr_executable: "{{ play_postgresql_bindir }}/repmgr"
+        postgresql_repmgrd_executable: "{{ play_postgresql_bindir }}/repmgrd"
 
 - name: Installing Repmgr
   apt:
@@ -45,7 +47,7 @@
 - name: Cleaning auto-generated PostgreSQL
   block:
     - name: Checking for an old installation
-      include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/installation_check.yaml"
+      include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/helpers/installation_check.yaml"
       vars:
         play_instance_pgdata_dir_fullpath_installation_lock_file: "/var/lib/postgresql/{{ play_postgresql_version }}/main/{{ .play_instance_pgdata_installation_lock_file_name }}"
       # Auto-generated PostgreSQL instance
@@ -58,7 +60,7 @@
   when: postgresql_installation.changed
 
 - name: Creating instances and configuring instances
-  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/00_cluster_tasks.yaml"
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/main.yaml"
   loop: "{{ play_postgresql.instances.keys() }}"
   loop_control:
     loop_var: loop_postgresql_instance_definition_name

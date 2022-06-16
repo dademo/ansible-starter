@@ -1,0 +1,62 @@
+---
+
+# Clean the current postgresql instance directory
+# variable `clean_directory_variables` must be set (list of string used to get variables)
+
+- name: Checking if should clean directory
+  set_fact:
+    play_instance_should_clean: "{{ play_instance_should_clean | default(False) or lookup('vars', item, default=False) }}"
+  loop: "{{ clean_directory_variables }}"
+  
+
+- name: Checking PostgreSQL directory state
+  find:
+    paths: "{{- play_instance_pgdata_dir_fullpath -}}"
+    file_type: any
+    hidden: yes
+    recurse: no
+  register: postgresql_directory_files
+
+- name: Workaround for missing variable in loop
+  set_fact:
+    has_existing_postgresql_files: "{{ postgresql_directory_files.matched > 0 }}"
+
+- name: Pgdata directory is not empty
+  debug:
+    msg: |-
+      Pgdata directory ({{- play_instance_pgdata_dir_fullpath -}}) is not empty.
+      Please clean it or set the {{ var_names }} variable to `true` to force a cluster reset.
+  when:
+    - has_existing_postgresql_files
+    - not (play_instance_should_clean)
+  vars:
+    var_names: |-
+      {%- set _vars = [] -%}
+      {%- for var_name in clean_directory_variables -%}
+      {{- _vars.append("`%s`" | format(var_name)) -}}
+      {%- endfor -%}
+      {{- _vars | join(' or ') -}}
+
+- name: Cleaning PostgreSQL directory
+  when:
+    - has_existing_postgresql_files
+    - play_instance_should_clean
+  block:
+    - name: We ensure the process has stopped
+      systemd:
+        name: "{{ play_instance_service_name }}"
+        state: stopped
+      ignore_errors: yes
+
+    - name: Cleaning the directory
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop: "{{ postgresql_directory_files.files | map(attribute='path') }}"
+      when:
+        - postgresql_directory_files.matched > 0
+        - play_instance_should_clean
+
+- name: Informing about the cleaned files
+  set_fact:
+    play_postgresql_instance_is_directory_empty: "{{ has_existing_postgresql_files }} | ternary(play_instance_should_clean, True)"

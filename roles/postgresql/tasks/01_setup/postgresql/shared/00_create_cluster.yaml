@@ -1,7 +1,7 @@
 ---
 
 - name: Loading shared variables
-  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/_variables.yaml"
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/helpers/variables.yaml"
 
 - name: Creating PostgreSQL instance directory
   file:
@@ -13,46 +13,18 @@
     # Parent directories too if required
     recurse: yes
 
-- name: Checking PostgreSQL directory state
-  find:
-    paths: "{{- play_instance_pgdata_dir_fullpath -}}"
-    file_type: any
-    hidden: yes
-    recurse: no
-  register: postgresql_directory_files
-
-- name: Workaround for missing variable in loop
-  set_fact:
-    has_existing_postgresql_files: "{{ postgresql_directory_files.matched > 0 }}"
-
-- name: Pgdata directory is not empty
-  debug:
-    msg: |-
-      Pgdata directory ({{- play_instance_pgdata_dir_fullpath -}}) is not empty.
-      Please clean it or set the `postgresql_clean_pgdata` variable to `true` to force a cluster reset.
-  when:
-    - has_existing_postgresql_files
-    - not (postgresql_clean_pgdata | default(False))
+- name: Cleaning the PostgreSQL directory
+  import_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/helpers/postgresql_clean_directory.yaml"
+  vars:
+    clean_directory_variables:
+      - postgresql_clean_pgdata
+      - postgresql_clean_pgdata_primary
 
 - name: Installing PostgreSQL
   when:
     - (not has_existing_postgresql_files) or (postgresql_clean_pgdata | default(False))
+    - play_is_primary
   block:
-    - name: We ensure the process has stopped
-      systemd:
-        name: "{{ play_instance_service_name }}"
-        state: stopped
-      ignore_errors: yes
-
-    - name: Cleaning the directory
-      file:
-        path: "{{ item }}"
-        state: absent
-      loop: "{{ postgresql_directory_files.files | map(attribute='path') }}"
-      when:
-        - postgresql_directory_files.matched > 0
-        - postgresql_clean_pgdata | default(False)
-
     - name: We ensure the locale is present (Debian)
       block:
         - name: We ensure the locale is present (Debian) | Ensure package is present
@@ -128,6 +100,3 @@
         cmd: "mv -v {{ item }} configuration/{{ item }}"
         chdir: "{{- play_instance_pgdata_dir_fullpath -}}"
       loop: "{{ postgresql_configuration_files }}"
-
-    - name: Setting up Systemd configuration
-      include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/01_1_systemd_configure.yaml"

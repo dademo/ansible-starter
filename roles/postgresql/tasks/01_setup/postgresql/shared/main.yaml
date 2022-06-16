@@ -1,0 +1,13 @@
+---
+
+- name: Creating instance
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/00_create_cluster.yaml"
+
+- name: Configuring instance
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/01_configure_cluster.yaml"
+
+- name: Configuring access
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/02_service_operations.yaml"
+
+- name: Installing repmgr
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/03_repmgr.yaml"

@@ -1,0 +1,149 @@
+---
+
+# Configuring repmgr tool
+
+- name: Loading shared variables
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/helpers/variables.yaml"
+
+- name: Ensure repmgr configuration directory exists
+  file:
+    path: "{{- play_instance_repmgr_dir_fullpath -}}"
+    state: directory
+    owner: root
+    group: root
+    mode: '755'
+    # Parent directories too if required
+    recurse: yes
+
+- name: Applying repmgr configuration
+  template:
+    src: postgresql/configuration/repmgr.conf.j2
+    dest: "{{ play_instance_repmgr_configuration_fullpath }}"
+    owner: root
+    group: root
+
+- name: Allowing repmgr user to restart the repmgr and database service
+  template:
+    src: postgresql/sudoers.j2
+    dest: /etc/sudoers.d/_postgresql@{{ play_instance_identifier }}
+    owner: root
+    group: root
+    mode: '644'
+
+- name: Configuring repmgr systemd service
+  template:
+    src: postgresql/postgresql-repmgr@-.service.j2
+    dest: /etc/systemd/system/{{ play_instance_repmgr_service_name }}
+    owner: root
+    group: root
+    mode: '644'
+
+- name: Checking if the host is already registered
+  become_user: postgres
+  command:
+    argv:
+      - sh
+      - -c
+      - "{{ postgresql_repmgr_executable }} -f '{{ play_instance_repmgr_configuration_fullpath }}' cluster show | grep -e '{{ inventory_hostname | escape | truncate(63, True) }}'"
+  register: play_instance_repmgr_registered_check
+  ignore_errors: yes
+
+- name: Adding the primary nodes to the cluster
+  become_user: postgres
+  command:
+    argv:
+      - "{{ postgresql_repmgr_executable }}"
+      - -f
+      - "{{ play_instance_repmgr_configuration_fullpath }}"
+      #- "{{ play_is_primary | ternary('primary', 'standby') }}"
+      - primary
+      - register
+  when:
+    - play_instance_repmgr_registered_check.rc != 0
+    - play_is_primary
+
+- name: Starting the repmgrd service
+  systemd:
+    name: "{{ play_instance_repmgr_service_name }}"
+    state: restarted
+    daemon-reload: yes
+  when:
+    - play_is_primary
+
+- name: Prepairing replicas
+  when:
+    - play_instance_repmgr_registered_check.rc != 0
+    - not play_is_primary
+  block:
+    - name: Ensure the PostgreSQL service is stopped
+      systemd:
+        name: "{{ play_instance_service_name }}"
+        state: stopped
+
+    - name: Creating PostgreSQL instance directory
+      file:
+        path: "{{- play_instance_pgdata_dir_fullpath -}}"
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '700'
+        # Parent directories too if required
+        recurse: yes
+
+    - name: Cleaning the PostgreSQL directory
+      import_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/helpers/postgresql_clean_directory.yaml"
+      vars:
+        clean_directory_variables:
+          - postgresql_clean_pgdata
+          - postgresql_clean_pgdata_replica
+
+    - name: Replicating the source database
+      become_user: postgres
+      command:
+        argv:
+          - "{{ postgresql_repmgr_executable }}"
+          - -f
+          - "{{ play_instance_repmgr_configuration_fullpath }}"
+          - -h
+          - "{{ play_primary_host }}"
+          - -U
+          - repmgr
+          - -d
+          - repmgr
+          - standby
+          - clone
+      when: play_postgresql_instance_is_directory_empty
+
+    - name: Configuring PostgreSQL
+      include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/helpers/postgresql_configure.yaml"
+  always:
+    - name: Starting the PostgreSQL service
+      systemd:
+        name: "{{ play_instance_service_name }}"
+        state: started
+
+    - name: Waiting for PostgreSQL to be started
+      wait_for:
+        host: localhost
+        port: "{{ play_postgresql_instance_definition.port }}"
+
+    - name: Registrery the standby nodes
+      become_user: postgres
+      command:
+        argv:
+          - "{{ postgresql_repmgr_executable }}"
+          - -f
+          - "{{ play_instance_repmgr_configuration_fullpath }}"
+          - standby
+          - register
+      when:
+        - play_instance_repmgr_registered_check.rc != 0
+        - not play_is_primary
+
+    - name: Starting and enabling the repmgrd service
+      systemd:
+        name: "{{ play_instance_repmgr_service_name }}"
+        state: started
+        enabled: yes
+        daemon-reload: yes
+      ignore_errors: yes

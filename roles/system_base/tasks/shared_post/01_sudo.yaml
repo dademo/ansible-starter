@@ -7,7 +7,14 @@
     hidden: yes
     follow: false
     recurse: no
-    excludes: "{{ ((default_users + (authentication.users | default([]))) | map(attribute='name') | list + sudo_users_ignore) | map('regex_replace', '^(.*)$', '*\\1*') | list }}"
+    excludes: |-
+      {{
+        ((default_users + (authentication.users | default([]))) |
+        map(attribute='name')                                   |
+        list + sudo_users_ignore)                               |
+        map('regex_replace', '^(.*)$', '*\\1*')                 |
+        list
+      }}
   register: sudoers_files
 
 - name: Configuring sudo | Adding users configuration
@@ -24,4 +31,4 @@
     path: '{{ item.path }}'
     state: absent
   loop: '{{ sudoers_files.files }}'
-
+  when: "{{ (item.path | basename).startswith('_') }}"

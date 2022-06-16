@@ -737,6 +737,7 @@ default_text_search_config = '{{ play_postgresql_instance_definition.text_search
 #local_preload_libraries = ''
 #session_preload_libraries = ''
 #shared_preload_libraries = ''	# (change requires restart)
+shared_preload_libraries = '{{ play_postgresql_instance_definition.shared_preload_libraries | join(',') }}'	# (change requires restart)
 #jit_provider = 'llvmjit'		# JIT library to use
 
 # - Other Defaults -

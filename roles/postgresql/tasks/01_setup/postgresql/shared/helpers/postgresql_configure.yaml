@@ -1,0 +1,56 @@
+---
+
+# Apply PostgreSQL configuration and creates directories
+
+- name: Creating Postgresql systemd service
+  block:
+    - name: Creating Postgresql systemd service | Creating Systemd folder
+      file:
+        path: /etc/systemd/system/{{ play_instance_service_name }}.d
+        state: directory
+    - name: Creating Postgresql systemd service | Creating service file
+      template:
+        src: postgresql/postgresql@-.service.j2
+        dest: /etc/systemd/system/{{ play_instance_service_name }}.d/ansible-postgresql-setup.conf
+        owner: root
+        group: root
+        mode: '644'
+
+- name: Reloading Postgresql systemd and enabling service
+  systemd:
+    name: "{{ play_instance_service_name }}"
+    enabled: yes
+    daemon_reload: yes
+
+- name: Updating service facts
+  service_facts: {}
+
+- name: Ensure folders exists
+  file:
+    name: "{{- item -}}"
+    state: directory
+    mode: '700'
+    owner: postgres
+    group: postgres
+  loop:
+    - "{{- play_instance_pgdata_dir_fullpath -}}/database"
+    - "{{- play_instance_pgdata_dir_fullpath -}}/configuration"
+
+- name: Applying configurations
+  template:
+    src: "postgresql/configuration/{{ item.src }}"
+    dest: "{{ play_instance_pgdata_dir_fullpath }}/{{ item.dest }}"
+    owner: postgres
+    group: postgres
+  loop:
+    - src: pg_hba.conf.j2
+      dest: configuration/pg_hba.conf
+    - src: pg_ident.conf.j2
+      dest: configuration/pg_ident.conf
+    - src: postgresql.conf.j2
+      dest: postgresql.conf
+  register: instance_configurations
+
+- name: Informing of a state change
+  set_fact:
+    play_postgresql_instance_configuration_changed: "{{ instance_configurations.changed }}"

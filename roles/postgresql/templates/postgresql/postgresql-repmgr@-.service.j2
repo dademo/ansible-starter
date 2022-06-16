@@ -1,0 +1,19 @@
+{#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
+[Unit]
+Description=PostgreSQL Cluster Repmgr %i
+Requires={{ play_instance_service_name }}
+AssertPathExists={{- play_instance_repmgr_configuration_fullpath }}
+
+[Service]
+Type=forking
+PIDFile={{- postgresql_repmgr_external_pid_file }}
+
+User=postgres
+Group=postgres
+
+ExecStart=-{{- postgresql_repmgrd_executable }} start '--config-file={{- play_instance_repmgr_configuration_fullpath }}' '--pid-file={{- postgresql_repmgr_external_pid_file }}' '--daemonize=yes'
+TimeoutStartSec=0
+TimeoutStopSec=1h
+
+[Install]
+WantedBy=multi-user.target

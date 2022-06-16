@@ -46,7 +46,7 @@ node_name='{{ inventory_hostname | escape | truncate(63, True) }}'
 				 # the length of time which elapses before a network
 				 # connection attempt is abandoned; for details see:
 				 #  https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-CONNECT-TIMEOUT
-conninfo='host=localhost dbname=repmgr user=repmgr connect_timeout={{ play_postgresql_instance_definition.replication.connect_timeout | default(2) }}'
+conninfo='host={{ play_instance_address }} dbname=repmgr user=repmgr connect_timeout={{ play_postgresql_instance_definition.replication.connect_timeout | default(2) }}'
 
 #data_directory=''		 # The node's data directory. This is needed by repmgr
 				 # when performing operations when the PostgreSQL instance
@@ -319,11 +319,13 @@ ssh_options='-q -o ConnectTimeout=10'	# Options to append to "ssh"
 					#
 					#     repmgr standby promote -f /etc/repmgr.conf
 					#
+promote_command='{{ postgresql_repmgr_executable }} standby promote -f "{{ play_instance_repmgr_configuration_fullpath }}" --log-to-file'
 #follow_command=''			# command repmgrd executes when instructing a standby to follow a new primary;
 					# use something like:
 					#
 					#     repmgr standby follow -f /etc/repmgr.conf --upstream-node-id=%n
 					#
+follow_command='{{ postgresql_repmgr_executable }} standby follow -f "{{ play_instance_repmgr_configuration_fullpath }}" --log-to-file --upstream-node-id=%n'
 #primary_notification_timeout=60	# Interval (in seconds) which repmgrd on a standby
 					# will wait for a notification from the new primary,
 					# before falling back to degraded monitoring
@@ -417,16 +419,18 @@ ssh_options='-q -o ConnectTimeout=10'	# Options to append to "ssh"
 					# "pg_ctlcluster". *IMPORTANT*: it is *not* a substitute
 					# for "promote_command"; do not use "repmgr standby promote"
 					# (or a script which executes "repmgr standby promote") here.
-service_start_command = '/usr/bin/systemctl start {{ play_instance_service_name }}'
-service_stop_command = '/usr/bin/systemctl stop {{ play_instance_service_name }}'
-service_restart_command = '/usr/bin/systemctl restart {{ play_instance_service_name }}'
-service_reload_command = '/usr/bin/systemctl reload {{ play_instance_service_name }}'
+service_start_command = 'sudo /usr/bin/systemctl start {{ play_instance_service_name }}'
+service_stop_command = 'sudo /usr/bin/systemctl stop {{ play_instance_service_name }}'
+service_restart_command = 'sudo /usr/bin/systemctl restart {{ play_instance_service_name }}'
+service_reload_command = 'sudo /usr/bin/systemctl reload {{ play_instance_service_name }}'
 
 
 # Used by "repmgr service (start|stop)" to control repmgrd
 #
-#repmgrd_service_start_command = '/usr/bin/systemctl start {{ play_instance_repmgr_service_name }}'
-#repmgrd_service_stop_command = '/usr/bin/systemctl stop {{ play_instance_repmgr_service_name }}'
+#repmgrd_service_start_command = ''
+repmgrd_service_start_command = 'sudo /usr/bin/systemctl start {{ play_instance_repmgr_service_name }}'
+#repmgrd_service_stop_command = ''
+repmgrd_service_stop_command = 'sudo /usr/bin/systemctl stop {{ play_instance_repmgr_service_name }}'
 
 #------------------------------------------------------------------------------
 # Status check thresholds

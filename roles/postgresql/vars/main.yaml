@@ -48,6 +48,15 @@ postgresql_external_pid_file: |-
     )
   }}
 
+postgresql_repmgr_external_pid_file: |-
+  {{
+    play_postgresql.external_pid_file |
+    default(
+      '/run/repmgr/%s' | format(play_instance_identifier | replace('/', '-')),
+      True
+    )
+  }}
+
 postgresql_instance_default:
   replication:
     enabled: False
@@ -78,6 +87,8 @@ postgresql_instance_default:
   timezone: UTC
   # Europe/Paris
   #log_timezone:
+  shared_preload_libraries:
+    - repmgr
   databases: []
   users: []
   privileges: []
