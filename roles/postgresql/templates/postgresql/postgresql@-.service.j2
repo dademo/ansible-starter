@@ -5,7 +5,10 @@ AssertPathExists={{- play_instance_pgdata_dir_fullpath }}
 
 [Service]
 Environment=PGDATA={{- play_instance_pgdata_dir_fullpath }}
-PIDFile={{- postgresql_external_pid_file }}
+PIDFile={{- play_postgresql_external_pid_file }}
+
+ExecStartPre=-/usr/bin/mkdir -p '{{ play_postgresql_external_pid_file | dirname }}'
+ExecStartPre=-/usr/bin/chown 'postgres:postgres' '{{ play_postgresql_external_pid_file | dirname }}'
 
 [Install]
 WantedBy=multi-user.target

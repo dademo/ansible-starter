@@ -46,7 +46,7 @@ node_name='{{ inventory_hostname | escape | truncate(63, True) }}'
 				 # the length of time which elapses before a network
 				 # connection attempt is abandoned; for details see:
 				 #  https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-CONNECT-TIMEOUT
-conninfo='host={{ play_instance_address }} dbname=repmgr user=repmgr connect_timeout={{ play_postgresql_instance_definition.replication.connect_timeout | default(2) }}'
+conninfo='host={{ play_instance_address }} port={{ play_postgresql_instance_definition.port }} dbname=repmgr user=repmgr connect_timeout={{ play_postgresql_instance_definition.replication.connect_timeout | default(2) }}'
 
 #data_directory=''		 # The node's data directory. This is needed by repmgr
 				 # when performing operations when the PostgreSQL instance
@@ -347,6 +347,7 @@ follow_command='{{ postgresql_repmgr_executable }} standby follow -f "{{ play_in
 					# "--no-pid-file" will force PID file creation to be skipped.
 					# Note: there is normally no need to set this, particularly if
 					# repmgr was installed from packages.
+repmgrd_pid_file='{{ play_postgresql_repmgr_external_pid_file }}'
 #repmgrd_exit_on_inactive_node=false	# If "true", and the node record is marked as "inactive", abort repmgrd startup
 #standby_disconnect_on_failover=false	# If "true", in a failover situation wait for all standbys to
 					# disconnect their WAL receivers before electing a new primary

@@ -11,11 +11,10 @@
   - name: Configuring primary PostgreSQL | Configuring PostgreSQL
     include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/helpers/postgresql_configure.yaml"
 
-  - name: Configuring primary PostgreSQL | Restarting PostgreSQL in case of a change
+  - name: Configuring primary PostgreSQL | Restarting PostgreSQL in case of a change or ensure it has started
     systemd:
       name: "{{ play_instance_service_name }}"
-      state: restarted
-    when: play_postgresql_instance_configuration_changed
+      state: "{{ play_postgresql_instance_configuration_changed | ternary('restarted', 'started') }}"
 
   - name: Configuring primary PostgreSQL | Waiting for PostgreSQL to be started
     wait_for:

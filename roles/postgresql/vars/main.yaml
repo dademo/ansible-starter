@@ -35,34 +35,31 @@ packages:
       {%- else -%}
         postgresql{{ postgresql_rhel_server_default_release }}-server
       {%- endif -%}
+  postgresql_more_packages:
+    Debian: |-
+      {%- if play_postgresql.force_version is defined -%}
+        ['postgresql-contrib-{{ play_postgresql.force_version }}']
+      {%- else -%}
+        ['postgresql-contrib']
+      {%- endif -%}
+    RedHat: |-
+      {%- if play_postgresql.force_version is defined -%}
+        ['postgresql{{ play_postgresql.force_version }}-contrib']
+      {%- else -%}
+        ['postgresql{{ postgresql_rhel_server_default_release }}-contrib']
+      {%- endif -%}
 
 play_software: "{{ play_postgresql.type | default('postgresql') | lower }}"
 play_instance_pgdata_installation_lock_file_name: '.ansible_postgresql_installed'
 
-postgresql_external_pid_file: |-
-  {{
-    play_postgresql.external_pid_file |
-    default(
-      '/run/postgresql/%s' | format(play_instance_identifier | replace('/', '-')),
-      True
-    )
-  }}
-
-postgresql_repmgr_external_pid_file: |-
-  {{
-    play_postgresql.external_pid_file |
-    default(
-      '/run/repmgr/%s' | format(play_instance_identifier | replace('/', '-')),
-      True
-    )
-  }}
+postgresql_pid_directory: /run/postgresql
 
 postgresql_instance_default:
   replication:
     enabled: False
     connect_timeout: 2
     # interface_address:
-  listen_addresses: 0.0.0.0
+  #listen_addresses: 0.0.0.0
   port: 5432
   max_connections: 100
   superuser_reserved_connections: 3

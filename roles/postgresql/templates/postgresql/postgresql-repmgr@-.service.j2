@@ -6,12 +6,15 @@ AssertPathExists={{- play_instance_repmgr_configuration_fullpath }}
 
 [Service]
 Type=forking
-PIDFile={{- postgresql_repmgr_external_pid_file }}
+PermissionsStartOnly=true
+PIDFile={{- play_postgresql_repmgr_external_pid_file }}
 
 User=postgres
 Group=postgres
 
-ExecStart=-{{- postgresql_repmgrd_executable }} start '--config-file={{- play_instance_repmgr_configuration_fullpath }}' '--pid-file={{- postgresql_repmgr_external_pid_file }}' '--daemonize=yes'
+ExecStartPre=-/usr/bin/mkdir -p '{{ play_postgresql_repmgr_external_pid_file | dirname }}'
+ExecStartPre=-/usr/bin/chown 'postgres:postgres' '{{ play_postgresql_repmgr_external_pid_file | dirname }}'
+ExecStart=-{{- postgresql_repmgrd_executable }} start '--config-file={{- play_instance_repmgr_configuration_fullpath }}' '--pid-file={{- play_postgresql_repmgr_external_pid_file }}' '--daemonize=yes'
 TimeoutStartSec=0
 TimeoutStopSec=1h
 

@@ -26,6 +26,22 @@
     cacheable: yes
     play_instance_pgdata_dir_fullpath: "{{- play_postgresql.pgdata_base -}}/{{ play_postgresql_version }}/{{- play_instance_pgdata_dir -}}"
     play_instance_repmgr_dir_fullpath: "/etc/repmgr/{{ play_postgresql_version }}/{{- play_instance_pgdata_dir -}}"
+    play_postgresql_external_pid_file: |-
+      {{
+        play_postgresql.external_pid_file |
+        default(
+          '/run/postgresql/%s' | format(play_instance_identifier | replace('/', '-')),
+          True
+        )
+      }}
+    play_postgresql_repmgr_external_pid_file: |-
+      {{
+        play_postgresql.external_pid_file |
+        default(
+          '/run/repmgr/%s' | format(play_instance_identifier | replace('/', '-')),
+          True
+        )
+      }}
 
 - name: Setting values (4/5)
   set_fact:
@@ -46,10 +62,28 @@
     play_instance_service_name: "postgresql@{{- play_instance_identifier -}}.service"
     play_instance_repmgr_service_name: "postgresql-repmgr@{{- play_instance_identifier -}}.service"
     play_instance_repmgr_configuration_fullpath: "{{ play_instance_repmgr_dir_fullpath }}/repmgr.conf"
+    play_databases_create: |-
+      {{
+        play_postgresql_instance_definition.databases +
+        (
+          play_postgresql_instance_definition.replication.enabled |
+          ternary(postgresql_repmgr.db_def, [])
+        )
+      }}
+    play_users_create: |-
+      {{
+        play_postgresql_instance_definition.users +
+        (
+          play_postgresql_instance_definition.replication.enabled |
+          ternary(postgresql_repmgr.user_def, [])
+        )
+      }}
+    play_users_privileges: "{{ play_postgresql_instance_definition.privileges }}"
 
 - name: Setting values (5/5)
   set_fact:
     play_instance_address: "{{ play_postgresql_instance_definition.replication.interface_address | default(ansible_facts.default_ipv4.address) }}"
+    play_instance_listen_address: "{{- play_postgresql_instance_definition.listen_addresses | default(['0.0.0.0']) -}}"
     play_primary_host: |-
       {%- set _primary_hosts_list = [] -%}
       {%- for _play_host in ansible_play_hosts_all -%}
@@ -58,6 +92,17 @@
       {%- endif -%}
       {%- endfor -%}
       {{- _primary_hosts_list | first -}}
+    play_db_extensions: |-
+      {%- set db_extensions = [] -%}
+      {%- for _database in play_databases_create -%}
+      {%- for _extension_name in _database.extensions | default([]) -%}
+      {{- db_extensions.append({
+        'db': _database.name,
+        'extension': _extension_name,
+      }) -}}
+      {%- endfor -%}
+      {%- endfor -%}
+      {{- db_extensions -}}
 
 - name: Validating values
   assert:

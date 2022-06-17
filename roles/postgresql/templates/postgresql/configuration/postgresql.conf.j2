@@ -53,7 +53,7 @@ ident_file = '{{- play_instance_pgdata_dir_fullpath -}}/configuration/pg_ident.c
 # If external_pid_file is not explicitly set, no extra PID file is written.
 #external_pid_file = ''			# write an extra PID file
 					# (change requires restart)
-external_pid_file = '{{ postgresql_external_pid_file }}'
+external_pid_file = '{{ play_postgresql_external_pid_file }}'
 
 
 #------------------------------------------------------------------------------
@@ -66,7 +66,7 @@ external_pid_file = '{{ postgresql_external_pid_file }}'
 					# comma-separated list of addresses;
 					# defaults to 'localhost'; use '*' for all
 					# (change requires restart)
-listen_addresses = '{{ play_postgresql_instance_definition.listen_addresses }}'
+listen_addresses = '{{ play_instance_listen_address | join(',') }}'
 #port = 5432				# (change requires restart)
 port = {{ play_postgresql_instance_definition.port }}
 #max_connections = 100			# (change requires restart)
@@ -461,7 +461,7 @@ logging_collector = on			# Enable capturing of stderr and csvlog
 # These are only used if logging_collector is on:
 log_directory = 'log'			# directory where log files are written,
 					# can be absolute or relative to PGDATA
-log_filename = 'postgresql-%a.log'	# log file name pattern,
+log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'	# log file name pattern,
 					# can include strftime() escapes
 #log_file_mode = 0600			# creation mode for log files,
 					# begin with 0 to use octal notation

@@ -9,6 +9,7 @@
         name: python3-psycopg2
         state: present
       when: ansible_facts.os_family == 'Debian'
+
     - name: Installing requirements (RedHat)
       dnf:
         name: python3-psycopg2
@@ -20,15 +21,19 @@
       community.postgresql.postgresql_db:
         name: "{{ item.name }}"
         login_unix_socket: "{{ play_postgresql_instance_definition.unix_socket_directories | first }}"
+        port: "{{ play_postgresql_instance_definition.port }}"
         state: present
-      loop: |-
-        {{
-          play_postgresql_instance_definition.databases +
-          (
-            play_postgresql_instance_definition.replication.enabled |
-            ternary(postgresql_repmgr.db_def, [])
-          )
-        }}
+      loop: "{{ play_databases_create }}"
+
+    - name: Enabling extensions on databases
+      become_user: postgres
+      community.postgresql.postgresql_ext:
+        db: "{{ item.db }}"
+        name: "{{ item.extension }}"
+        login_unix_socket: "{{ play_postgresql_instance_definition.unix_socket_directories | first }}"
+        port: "{{ play_postgresql_instance_definition.port }}"
+        state: present
+      loop: "{{ play_db_extensions }}"
 
     - name: Creating users
       become_user: postgres
@@ -38,16 +43,10 @@
         db: "{{ item.database | default('postgres') }}"
         role_attr_flags: "{{ item.role_attr_flags | default([]) | join(',') }}"
         login_unix_socket: "{{ play_postgresql_instance_definition.unix_socket_directories | first }}"
+        port: "{{ play_postgresql_instance_definition.port }}"
         state: present
         encrypted: yes
-      loop: |-
-        {{
-          play_postgresql_instance_definition.users +
-          (
-            play_postgresql_instance_definition.replication.enabled |
-            ternary(postgresql_repmgr.user_def, [])
-          )
-        }}
+      loop: "{{ play_users_create }}"
 
     - name: Updating users roles
       become_user: postgres
@@ -67,5 +66,6 @@
           }}
         grant_option: "{{ item.grant_option | default(False) }}"
         login_unix_socket: "{{ play_postgresql_instance_definition.unix_socket_directories | first }}"
+        port: "{{ play_postgresql_instance_definition.port }}"
         state: present
-      loop: "{{ play_postgresql_instance_definition.privileges }}"
+      loop: "{{ play_users_privileges }}"

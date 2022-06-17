@@ -72,7 +72,10 @@
 
 - name: Prepairing replicas
   when:
-    - play_instance_repmgr_registered_check.rc != 0
+    - |-
+      play_instance_repmgr_registered_check.rc != 0
+      or postgresql_clean_pgdata | default(False)
+      or postgresql_clean_pgdata_replica | default(False)
     - not play_is_primary
   block:
     - name: Ensure the PostgreSQL service is stopped
@@ -106,6 +109,8 @@
           - "{{ play_instance_repmgr_configuration_fullpath }}"
           - -h
           - "{{ play_primary_host }}"
+          - -p
+          - "{{ play_postgresql_instance_definition.port }}"
           - -U
           - repmgr
           - -d

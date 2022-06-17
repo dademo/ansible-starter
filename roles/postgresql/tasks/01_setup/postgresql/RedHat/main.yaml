@@ -2,12 +2,11 @@
 
 - name: Installing PostgreSQL
   dnf:
-    name: "{{ packages.postgresql[ansible_facts.os_family] }}"
+    name: "{{ [packages.postgresql[ansible_facts.os_family]] + packages.postgresql_more_packages[ansible_facts.os_family] }}"
     state: present
     update_cache: yes
     disable_gpg_check: false
     validate_certs: yes
-  throttle: 1
 
 - name: Getting postgresql executables path
   block:
@@ -38,6 +37,27 @@
         postgresql_repmgr_executable: "{{ play_postgresql_bindir }}/repmgr"
         postgresql_repmgrd_executable: "{{ play_postgresql_bindir }}/repmgrd"
 
+- name: Installing PostgreSQL additional packages
+  dnf:
+    name: "{{ _packages }}"
+    state: present
+    update_cache: yes
+    disable_gpg_check: false
+    validate_certs: yes
+  vars:
+    # Note you can use %s for PostgreSQL version
+    _packages: |-
+      {%- set _loop_packages = [] -%}
+      {%- for _package in (play_postgresql.additional_packages | default({})).RedHat | default([]) -%}
+      {%- if '%s' in _package -%}
+      {{- _loop_packages.append(_package | format(play_postgresql_version)) -}}
+      {%- else -%}
+      {{- _loop_packages.append(_package) -}}
+      {%- endif -%}
+      {%- endfor -%}
+      {{- _loop_packages -}}
+  when: (_packages | length) > 0
+
 - name: Installing Repmgr
   dnf:
     name: "repmgr_{{ play_postgresql_version }}"
@@ -65,6 +85,7 @@
   loop: "{{ play_postgresql.instances.keys() }}"
   loop_control:
     loop_var: loop_postgresql_instance_definition_name
+  when: not postgresql_instance_deploy is defined or loop_postgresql_instance_definition_name ==  postgresql_instance_deploy
 
 - name: Enabling global PostgreSQL service
   systemd:

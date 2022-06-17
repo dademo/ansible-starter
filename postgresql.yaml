@@ -9,6 +9,7 @@
   roles:
     - ssh_guard
     - postgresql
+  any_errors_fatal: yes
   vars:
     play_postgresql: |-
       {{-
