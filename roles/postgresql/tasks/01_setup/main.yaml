@@ -1,5 +1,11 @@
 ---
 
+- name: Setting the instance type
+  set_fact:
+    cacheable: yes
+    ##
+    play_software: "{{ play_postgresql.type | default('postgresql') | lower }}"
+
 - name: Installing and configuring PostgreSQL
   include_tasks: "postgresql/{{ ansible_facts.os_family }}/main.yaml"
   when: play_software == 'postgresql'

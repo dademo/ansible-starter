@@ -2,9 +2,6 @@
 
 # Configuring repmgr tool
 
-- name: Loading shared variables
-  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/helpers/variables.yaml"
-
 - name: Ensure repmgr configuration directory exists
   file:
     path: "{{- play_instance_repmgr_dir_fullpath -}}"
@@ -55,12 +52,11 @@
       - "{{ postgresql_repmgr_executable }}"
       - -f
       - "{{ play_instance_repmgr_configuration_fullpath }}"
-      #- "{{ play_is_primary | ternary('primary', 'standby') }}"
       - primary
       - register
   when:
     - play_instance_repmgr_registered_check.rc != 0
-    - play_is_primary
+    - play_instance_is_primary
 
 - name: Starting the repmgrd service
   systemd:
@@ -68,7 +64,7 @@
     state: restarted
     daemon-reload: yes
   when:
-    - play_is_primary
+    - play_instance_is_primary
 
 - name: Prepairing replicas
   when:
@@ -76,7 +72,7 @@
       play_instance_repmgr_registered_check.rc != 0
       or postgresql_clean_pgdata | default(False)
       or postgresql_clean_pgdata_replica | default(False)
-    - not play_is_primary
+    - not play_instance_is_primary
   block:
     - name: Ensure the PostgreSQL service is stopped
       systemd:
@@ -143,7 +139,7 @@
           - register
       when:
         - play_instance_repmgr_registered_check.rc != 0
-        - not play_is_primary
+        - not play_instance_is_primary
 
     - name: Starting and enabling the repmgrd service
       systemd:

@@ -39,3 +39,4 @@ galaxy_info:
   dependencies:
     - 'community.general'
     - 'community.postgresql'
+    - 'ansible.posix'

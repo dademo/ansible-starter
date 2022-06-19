@@ -1,0 +1,74 @@
+---
+
+# Prepairing barman replication on the primary host
+
+- name: Handling postgres user SSH keys
+  delegate_to: localhost
+  become: no
+  run_once: yes
+  block:
+  - name: Ensure the local SSH keys directory is present
+    file:
+      path: 'resources/ansible_postgres'
+      state: directory
+      recurse: true
+    delegate_to: localhost
+    become: no
+
+  - name: Checking if a key already exists
+    stat:
+      path: "{{ item }}"
+      get_attributes: no
+      get_checksum: no
+      get_mime: no
+    loop:
+      - resources/ansible_postgres/id_rsa
+      - resources/ansible_postgres/id_rsa.pub
+    register: barman_local_ssh_keys
+
+  - name: Creating the barman keys
+    command:
+      cmd: "ssh-keygen -b 4096 -t rsa -N '' -f 'resources/ansible_postgres/id_rsa'"
+    when: not (barman_local_ssh_keys.results | first).stat.exists
+
+- name: Copying key to every primary host
+  when: play_instance_is_primary
+  block:
+    - name: Copying key to every primary host | Getting the PostgreSQL home
+      getent:
+        database: passwd
+        key: postgres
+
+    - name: Creating the ~/.ssh directory
+      file:
+        path: "{{ postgres_home }}/.ssh"
+        state: directory
+        recurse: no
+        mode: '700'
+        owner: postgres
+        group: postgres
+      vars:
+        postgres_home: "{{ getent_passwd.postgres[4] }}"
+
+    - name: Copying key to every primary host | Copying the barman key
+      copy:
+        src: "{{ item }}"
+        dest: "{{ postgres_home }}/.ssh/{{ item | basename }}"
+        mode: '600'
+        owner: postgres
+        group: postgres
+      loop:
+        - resources/ansible_postgres/id_rsa
+        - resources/ansible_postgres/id_rsa.pub
+      vars:
+        postgres_home: "{{ getent_passwd.postgres[4] }}"
+
+    - name: Adding barman to the list of allowed remotes
+      ansible.posix.authorized_key:
+        user: postgres
+        key: "{{ lookup('file', 'resources/ansible_postgres/id_rsa.pub') }}"
+        key_options: |-
+          from: "{{ play_barman_hosts_addresses | join(',') }}"
+        comment: Barman host remote access
+        state: present
+        manage_dir: true

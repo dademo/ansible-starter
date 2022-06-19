@@ -48,8 +48,10 @@ packages:
       {%- else -%}
         ['postgresql{{ postgresql_rhel_server_default_release }}-contrib']
       {%- endif -%}
+  barman:
+    Debian: barman
+    RedHat: barman
 
-play_software: "{{ play_postgresql.type | default('postgresql') | lower }}"
 play_instance_pgdata_installation_lock_file_name: '.ansible_postgresql_installed'
 
 postgresql_pid_directory: /run/postgresql

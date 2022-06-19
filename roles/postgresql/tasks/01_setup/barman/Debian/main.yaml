@@ -1,1 +1,12 @@
 ---
+
+- name: Installing Barman
+  apt:
+    name: "{{ [packages.barman[ansible_facts.os_family]] }}"
+    state: present
+    update_cache: yes
+    disable_gpg_check: false
+    validate_certs: yes
+
+- name: Configuring barman
+  include_tasks: "{{ role_path }}/tasks/01_setup/barman/shared/main.yaml"

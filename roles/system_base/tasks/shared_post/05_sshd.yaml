@@ -23,7 +23,7 @@
 
 - name: Regenerating SSH keys
   command:
-    cmd: ssh-keygen -A
+    cmd: "ssh-keygen -A -N ''"
     creates: /etc/ssh/.ansible_keygen
 
 - name: Configuring SSH | Configuring SSH daemon

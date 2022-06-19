@@ -5,6 +5,7 @@
 - name: Setting values (1/5)
   set_fact:
     cacheable: yes
+    ##
     play_postgresql_instance_definition: |-
       {{
         postgresql_instance_default |
@@ -18,12 +19,14 @@
 - name: Setting values (2/5)
   set_fact:
     cacheable: yes
+    ##
     play_instance_identifier: "{{ loop_postgresql_instance_definition_name | replace('/', '-') | replace(':', '-') }}"
     play_instance_pgdata_dir: "{{ loop_postgresql_instance_definition_name | replace('/', '-') | replace(':', '-') }}"
 
 - name: Setting values (3/5)
   set_fact:
     cacheable: yes
+    ##
     play_instance_pgdata_dir_fullpath: "{{- play_postgresql.pgdata_base -}}/{{ play_postgresql_version }}/{{- play_instance_pgdata_dir -}}"
     play_instance_repmgr_dir_fullpath: "/etc/repmgr/{{ play_postgresql_version }}/{{- play_instance_pgdata_dir -}}"
     play_postgresql_external_pid_file: |-
@@ -46,7 +49,8 @@
 - name: Setting values (4/5)
   set_fact:
     cacheable: yes
-    play_is_primary: |-
+    ##
+    play_instance_is_primary: |-
       {{-
         play_postgresql_instance_definition.is_primary              |
         default(inventory_hostname == (ansible_play_hosts | first)) |
@@ -87,11 +91,19 @@
     play_primary_host: |-
       {%- set _primary_hosts_list = [] -%}
       {%- for _play_host in ansible_play_hosts_all -%}
-      {%- if (play_postgresql.type | default('postgresql')) == 'postgresql' and hostvars[_play_host]['play_is_primary'] | default(False) -%}
+      {%- if play_software == 'postgresql' and hostvars[_play_host]['play_instance_is_primary'] | default(False) -%}
       {{- _primary_hosts_list.append(hostvars[_play_host]['ansible_facts']['default_ipv4']['address']) -}}
       {%- endif -%}
       {%- endfor -%}
       {{- _primary_hosts_list | first -}}
+    play_barman_hosts_addresses: |-
+      {%- set _barman_hosts_list = [] -%}
+      {%- for _play_host in ansible_play_hosts_all -%}
+      {%- if hostvars[_play_host]['play_software'] == 'barman' -%}
+      {{- _barman_hosts_list.append(hostvars[_play_host]['ansible_facts']['default_ipv4']['address']) -}}
+      {%- endif -%}
+      {%- endfor -%}
+      {{- _barman_hosts_list -}}
     play_db_extensions: |-
       {%- set db_extensions = [] -%}
       {%- for _database in play_databases_create -%}

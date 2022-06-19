@@ -1,5 +1,8 @@
 ---
 
+- name: Loading shared variables
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/helpers/variables.yaml"
+
 - name: Creating instance
   include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/00_create_cluster.yaml"
 
@@ -11,3 +14,7 @@
 
 - name: Installing repmgr
   include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/03_repmgr.yaml"
+
+- name: Prepairing Barman replication on the primary host
+  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/04_barman.yaml"
+  when: play_barman_hosts_addresses | length > 0

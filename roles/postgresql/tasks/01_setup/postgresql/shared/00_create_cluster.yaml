@@ -1,8 +1,5 @@
 ---
 
-- name: Loading shared variables
-  include_tasks: "{{ role_path }}/tasks/01_setup/postgresql/shared/helpers/variables.yaml"
-
 - name: Creating PostgreSQL instance directory
   file:
     path: "{{- play_instance_pgdata_dir_fullpath -}}"
@@ -23,7 +20,7 @@
 - name: Installing PostgreSQL
   when:
     - (not has_existing_postgresql_files) or (postgresql_clean_pgdata | default(False))
-    - play_is_primary
+    - play_instance_is_primary
   block:
     - name: We ensure the locale is present (Debian)
       block:

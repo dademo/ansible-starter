@@ -2,13 +2,12 @@
 
 - name: Installing PostgreSQL
   apt:
-    name: "{{ [play_postgresql.packages.postgresql[ansible_facts.os_family]] + play_postgresql.postgresql_more_packages[ansible_facts.os_family] }}"
+    name: "{{ [packages.postgresql[ansible_facts.os_family]] + packages.postgresql_more_packages[ansible_facts.os_family] }}"
     state: present
     update_cache: yes
     disable_gpg_check: false
     validate_certs: yes
   register: postgresql_installation
-  throttle: 1
 
 - name: Getting postgresql executables path
   block:

@@ -2,7 +2,7 @@
 # Create PostgreSQL databases and users
 
 - name: Performing operations on the primary host
-  when: play_is_primary
+  when: play_instance_is_primary
   block:
     - name: Installing requirements (Debian)
       apt:

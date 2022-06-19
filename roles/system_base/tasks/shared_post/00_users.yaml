@@ -53,6 +53,15 @@
       register: privkey_stat
       loop: '{{ created_users.results }}'
 
+    - name: Ensure the local SSH keys directory is present
+      file:
+        path: 'resources/{{ item.stat.pw_name }}'
+        state: directory
+        recurse: true
+      loop: '{{ pubkey_stat.results }}'
+      delegate_to: localhost
+      become: no
+
     - name: Configuring users and groups | Saving SSH keys | Getting public key if present
       fetch:
         src: '{{ item.stat.path }}'
