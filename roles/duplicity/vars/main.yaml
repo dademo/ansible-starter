@@ -1,0 +1,11 @@
+---
+
+packages:
+  Debian:
+    - duplicity
+    - gnupg2
+    - cron
+  RedHat:
+    - duplicity
+    - gnupg2
+    - cronie

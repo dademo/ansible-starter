@@ -1,0 +1,12 @@
+{#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
+#!/bin/bash
+
+set -e
+
+{# Building duplicity args #}
+{% set duplicity_args = [] %}
+{% if backup_job_def.type == 'ssh' %}
+{% elif backup_job_def.type == 'ftp %}
+{% endif %}
+
+env duplicity {{ duplicity_args | join(' ') }} | tee -a "/var/log/$(date +%Y-%m-%d)"

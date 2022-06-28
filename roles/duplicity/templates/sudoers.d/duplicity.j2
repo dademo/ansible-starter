@@ -1,0 +1,8 @@
+{#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
+Defaults:postgres !requiretty
+#duplicity ALL = NOPASSWD: /usr/bin/duplicity start {{ play_instance_service_name }}, \
+#                                /usr/bin/systemctl stop {{ play_instance_service_name }}, \
+#                                /usr/bin/systemctl restart {{ play_instance_service_name }}, \
+#                                /usr/bin/systemctl reload {{ play_instance_service_name }}, \
+#                                /usr/bin/systemctl start {{ play_instance_repmgr_service_name }}, \
+#                                /usr/bin/systemctl stop {{ play_instance_repmgr_service_name }}

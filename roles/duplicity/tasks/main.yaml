@@ -1,0 +1,154 @@
+---
+
+- name: Performing installation
+  include_tasks: "{{ ansible_facts.os_family }}/setup.yaml"
+
+- name: Creating duplicity backup group
+  group:
+    name: duplicity
+    system: yes
+    state: present
+
+- name: Creating duplicity backup user
+  user:
+    name: duplicity
+    group: duplicity
+    system: yes
+    create_home: yes
+    home: /lib/duplicity
+    state: present
+
+- name: Generating gpg keys
+  delegate_to: localhost
+  become: false
+  block:
+    - name: Ensure the local directory exists
+      file:
+        path: resources/ansible_duplicity
+        state: directory
+
+    - name: Generating gpg keys | Checking if a key already exists
+      stat:
+        path: resources/ansible_duplicity/duplicity.gpg
+      register: existing_gpg_key
+
+    - name: Generating gpg keys | Creating a new key
+      command:
+        argv:
+          - gpg
+          - --generate-key
+          - --openpgp
+          - --full-generate-key
+          - --batch
+          - --output
+          - resources/ansible_duplicity/duplicity.gpg
+        chdir: "{{ playbook_dir }}"
+        stdin: |-
+          Key-Type: {{ play_duplicity.key.type | default('RSA') }}
+          Key-Length: {{ play_duplicity.key.length | default(2048) }}
+          {#
+          Subkey-Type: {{ play_duplicity.key.type | default('RSA') }}
+          Subkey-Length: {{ play_duplicity.key.length | default(2048) }}
+          #}
+          Name-Real: {{ play_duplicity.key.name | default('duplicity') }}
+          Name-Email: {{ play_duplicity.key.email | default('duplicity@localdomain') }}
+          {% if play_duplicity.key.comment is defined %}
+          Name-Comment: {{ play_duplicity.key.comment }}
+          {% endif %}
+          Expire-Date: {{ play_duplicity.key.expire_date | default(0) }}
+      when: not existing_gpg_key.stat.exists
+
+- name: Creating duplicity the logs directory
+  file:
+    path: /var/log/duplicity
+    state: directory
+    owner: duplicity
+    group: duplicity
+
+- name: Creating the duplicity resources directory
+  file:
+    path: /lib/duplicity/resources
+    state: directory
+    owner: duplicity
+    group: duplicity
+
+- name: Copying resources
+  copy:
+    src: "{{ item.source }}"
+    dest: "/lib/duplicity/resources/{{ item.final_name }}"
+    owner: duplicity
+    group: duplicity
+  loop: "{{ play_duplicity.resources | default([]) }}"
+
+- name: Listing existing resources
+  find:
+    paths: /lib/duplicity/resources
+    file_type: file
+  register: existing_resources
+
+- name: Cleaning unnecessary resources
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ existing_resources.files | map(attribute='path') }}"
+  when: "item | basename not in play_duplicity.resources | default([]) | map(attribute='final_name')"
+
+- name: Creating the duplicity target directory
+  file:
+    path: /lib/duplicity/scripts
+    state: directory
+    owner: root
+    group: root
+
+- name: Grant duplicity user the right to execute backups as root
+  template:
+    src: sudoers.d/duplicity.j2
+    dest: /etc/sudoers.d/_duplicity
+    owner: root
+    group: root
+    mode: '644'
+
+- name: Listing existing script
+  find:
+    paths: /lib/duplicity/scripts
+    file_type: file
+  register: existing_scripts
+
+- name: Configuring backups
+  block:
+    - name: Creating the script
+      template:
+        src: "duplicity_exec.bash.j2"
+        dest: "/lib/duplicity/scripts{{ item.name }}.bash"
+        owner: root
+        group: root
+        mode: '744'
+        
+    - name: Scheduling the job execution
+      cron:
+        name: "{{ item.name }}"
+        job: "sudo -u root bash /lib/duplicity/scripts{{ item.name }}.bash"
+        minute: "{{ item.cron.minute | default('*') }}"
+        hour: "{{ item.cron.hour | default('*') }}"
+        day: "{{ item.cron.day | default('*') }}"
+        month: "{{ item.cron.month | default('*') }}"
+        weekday: "{{ item.cron.weekday | default('*') }}"
+        user: duplicity
+        state: absent
+  loop: "{{ play_duplicity.backups }}"
+
+- name: Cleaning unnecessary backups
+  block:
+    - name: Cleaning unnecessary backups | Removing scripts
+      file:
+        path: "{{ item }}"
+        state: absent
+
+    - name: Cleaning unnecessary backups | Removing crontab entry
+      cron:
+        name: "{{ item | basename | regex_replace('.bash', '') }}"
+        user: duplicity
+        state: absent
+  loop: "{{ existing_scripts.files | map(attribute='path') }}"
+  when: "item | basename | regex_replace('.bash', '') not in play_duplicity.backups | map(attribute='name')"
+
