@@ -59,6 +59,7 @@
         state: directory
         recurse: true
       loop: '{{ pubkey_stat.results }}'
+      when: item.stat.exists
       delegate_to: localhost
       become: no
 
