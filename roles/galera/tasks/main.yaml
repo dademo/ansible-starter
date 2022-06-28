@@ -158,6 +158,17 @@
     owner: root
     group: root
 
+- name: Adding Systemd customization
+  block:
+    - name: Adding Systemd customization | Ensure the folder exists
+      file:
+        path: /etc/systemd/system/mariadb.service.d
+        state: directory
+    - name: Adding Systemd customization | Applying configuration
+      template:
+        src: mariadb.service.j2
+        dest: /etc/systemd/system/mariadb.service.d/runtimeDirectory.conf
+
 - name: Starting services
   systemd:
     name: mariadb
