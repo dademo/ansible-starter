@@ -29,6 +29,7 @@
   - name: Creating the barman keys
     command:
       cmd: "ssh-keygen -b 4096 -t rsa -N '' -f 'resources/ansible_postgres/id_rsa'"
+      chdir: "{{ playbook_dir }}"
     when: not (barman_local_ssh_keys.results | first).stat.exists
 
 - name: Copying key to every primary host
