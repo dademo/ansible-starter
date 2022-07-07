@@ -64,6 +64,7 @@
       {%- endif -%}
     play_instance_pgdata_dir_fullpath_installation_lock_file: "{{- play_instance_pgdata_dir_fullpath -}}/{{ play_instance_pgdata_installation_lock_file_name }}"
     play_instance_service_name: "postgresql@{{- play_instance_identifier -}}.service"
+    play_instance_service_wait_for_primary_name: "postgresql-wait-for-primary@{{- play_instance_identifier -}}.service"
     play_instance_repmgr_service_name: "postgresql-repmgr@{{- play_instance_identifier -}}.service"
     play_instance_repmgr_configuration_fullpath: "{{ play_instance_repmgr_dir_fullpath }}/repmgr.conf"
     play_databases_create: |-

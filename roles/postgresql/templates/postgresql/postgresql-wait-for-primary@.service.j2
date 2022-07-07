@@ -1,0 +1,17 @@
+{#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
+[Unit]
+Description=Wait for Postgresql cluster %i primary to start
+Before=postgresql@%i.service
+Requires=network.target
+
+[Service]
+Type=oneshot
+
+Environment=POSTGRESQL_HOST=
+Environment=POSTGRESQL_PORT=5432
+
+ExecStart=/bin/sh -c "until timeout 1 sh -c '</dev/tcp/$POSTGRESQL_HOST/$POSTGRESQL_PORT'; do echo 'Waiting for postgresql primary'; sleep 5; done"
+TimeoutSec=900
+
+[Install]
+WantedBy=multi-user.target

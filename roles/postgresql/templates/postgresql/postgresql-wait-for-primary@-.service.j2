@@ -1,0 +1,5 @@
+{#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
+
+[Service]
+Environment=POSTGRESQL_HOST={{ play_primary_host }}
+Environment=POSTGRESQL_PORT={{ play_postgresql_instance_definition.port }}

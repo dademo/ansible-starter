@@ -52,7 +52,7 @@
       become_user: postgres
       community.postgresql.postgresql_privs:
         database: "postgres"
-        roles: "{{ item.role | default(['PUBLIC']) | join(',') }}"
+        roles: "{{ item.roles | default(['PUBLIC']) | join(',') }}"
         privs: "{{ item.privileges | default(['ALL']) | join(',') }}"
         type: "{{ item.type | default('database') }}"
         objs: |-

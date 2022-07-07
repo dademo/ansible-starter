@@ -1,0 +1,4 @@
+{#- vim: set tabstop=2 shiftwidth=2 expandtab filetype=jinja2 : #}
+[Unit]
+Requires={{ play_instance_service_wait_for_primary_name }}
+After={{ play_instance_service_wait_for_primary_name }}

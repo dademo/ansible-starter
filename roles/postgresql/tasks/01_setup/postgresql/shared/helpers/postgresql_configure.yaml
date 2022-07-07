@@ -8,10 +8,12 @@
       file:
         path: /etc/systemd/system/{{ play_instance_service_name }}.d
         state: directory
+        owner: root
+        group: root
     - name: Creating Postgresql systemd service | Creating service file
       template:
         src: postgresql/postgresql@-.service.j2
-        dest: /etc/systemd/system/{{ play_instance_service_name }}.d/ansible-postgresql-setup.conf
+        dest: /etc/systemd/system/{{ play_instance_service_name }}.d/override.conf
         owner: root
         group: root
         mode: '644'

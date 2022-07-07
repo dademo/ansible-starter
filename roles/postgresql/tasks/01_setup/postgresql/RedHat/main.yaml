@@ -73,6 +73,7 @@
   loop:
     - postgresql.service
     - postgresql@.service
+    - postgresql-wait-for-primary@.service
   register: postgresql_global_services_config
 
 - name: Reloading Systemd configuration
